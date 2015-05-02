@@ -1,0 +1,250 @@
+
+body {
+	background: url('../img/bgpattern.png') repeat scroll center top #1e1e1e;
+	color: #878787;
+	font: 20px 'Open Sans', sans-serif;
+	font-weight: 300;
+	line-height: 1.2;
+	text-decoration: none;
+}
+
+a {
+	color: #fafafa;
+	font-weight: 400;
+	text-decoration: none;
+	-webkit-transition: all 0.1s ease-out;
+	transition: all 0.1s ease-out;
+}
+
+a:hover {
+	color: #fff;
+	text-decoration: underline;
+}
+
+h1 {
+	color: #fafafa;
+	font-size: 32px;
+	font-weight: 400;
+}
+
+.button {
+	padding: 8px 20px 11px;
+	display: inline-block;
+	border-radius: 20px;
+	background: #878787;
+	font-size: 18px;
+	font-weight: 700;
+	color: #fafafa;
+}
+
+.button:hover {
+	text-decoration: none;
+}
+
+.button.primary {
+	background: #2e3192;
+}
+
+.button.success {
+	background: #00a651;
+}
+
+.button.info {
+	background: #00aeef;
+}
+
+.button.warning {
+	background: #f7941d;
+}
+
+.button.danger {
+	background: #ed1c24;
+}
+
+.clearfix {
+	clear: both;
+}
+
+body > section {
+	padding: 40px;
+	overflow: hidden;
+}
+
+	.hello-section {
+	}
+
+		.hello-section > .hello-column {
+			width: 1160px;
+			margin: 0 auto;
+		}
+
+			.hello-column > .hello-info {
+				width: 400px;
+				height: 400px;
+				float: left;
+			}
+
+				.hello-info > .hello-logo {
+					width: 400px;
+					height: 80px;
+					display: block;
+					background: url('../img/hellologo.png') no-repeat;
+				}
+
+				.hello-info > h1 {
+					margin-top: 60px;
+				}
+
+				.hello-info > p {
+					height: 140px;
+					display: inline-block;
+					margin-top: 40px;
+				}
+
+				.hello-info > .hello-badge {
+					margin-top: 42px;
+				}
+
+			.hello-macbook {
+				width: 560px;
+				height: 400px;
+				margin-top: 80px;
+				float: right;
+			}
+
+				.hello-macbook div {
+					width: 692px;
+					height: 400px;
+					background: url('../img/macbook.png');
+				}
+
+	.features-section {
+		background: #fafafa;
+	}
+
+		.features-section > .features-column {
+			width: 1160px;
+			margin: 0 auto;
+		}
+
+			.features-column > .features-item {
+				width: 360px;
+				height: 200px;
+				margin-right: 40px;
+				float: left;
+			}
+
+			.features-column > .features-item:last-child {
+				margin: 0;
+			}
+
+				.features-item > h1 {
+					height: 40px;
+					display: block;
+					color: #464646;
+				}
+
+				.features-item > p {
+					margin-top: 20px;
+				}
+
+	.social-section {
+	}
+
+		.social-section > .social-column {
+			width: 1160px;
+			margin: 0 auto;
+		}
+
+			.social-column > .social-description {
+				width: 360px;
+				height: 200px;
+				margin-right: 40px;
+				float: left;
+			}
+
+			.social-column > .social-description:last-child {
+				margin: 0;
+			}
+
+				.social-description > h1 {
+					height: 40px;
+					display: block;
+				}
+
+				.social-description > p {
+					margin-top: 20px;
+				}
+
+				.social-description > li {
+					display: block;
+					margin-bottom: 20px;
+				}
+
+				.social-description > li:last-child {
+					margin: 0;
+				}
+
+					.social-description > li > a {
+						width: 360px;
+						height: 40px;
+						display: block;
+					}
+
+						.social-description > li > a > i {
+							width: 40px;
+							height: 40px;
+							display: block;
+							float: left;
+						}
+
+						.social-icon.vk {
+							background: url('../img/socialicons.png') no-repeat 0 0;
+						}
+
+						.social-icon.twitter {
+							background: url('../img/socialicons.png') no-repeat 0 -40px;
+						}
+
+						.social-icon.instagram {
+							background: url('../img/socialicons.png') no-repeat 0 -80px;
+						}
+
+						.social-icon.pinterest {
+							background: url('../img/socialicons.png') no-repeat -40px 0px;
+						}
+
+						.social-icon.youtube {
+							background: url('../img/socialicons.png') no-repeat -40px -40px;
+						}
+
+						.social-icon.facebook {
+							background: url('../img/socialicons.png') no-repeat -40px -80px;
+						}
+
+						.social-description li a > span {
+							display: inline-block;
+							padding: 6px 20px;
+						}
+
+						.social-description li a:hover > span {
+							display: inline-block;
+							padding: 6px 20px;
+							text-decoration: underline;
+						}
+
+	footer {
+	}
+
+		footer > .footer-column {
+			width: 1160px;
+			height: 80px;
+			margin: 0 auto;
+			border-top: 3px solid #fafafa;
+			text-align: center;
+		}
+
+			.footer-column > span {
+				display: inline-block;
+				margin-top: 27px;
+			}
