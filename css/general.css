@@ -61,6 +61,36 @@ h1 {
 	background: #ed1c24;
 }
 
+.label {
+	padding: 6px 19px 9px;
+	display: inline-block;
+	border-radius: 20px;
+	border: 2px solid #878787;
+	font-size: 18px;
+	font-weight: 400;
+	color: #fafafa;
+}
+
+.label.primary {
+	border: 2px solid #2e3192;
+}
+
+.label.success {
+	border: 2px solid #00a651;
+}
+
+.label.info {
+	border: 2px solid #00aeef;
+}
+
+.label.warning {
+	border: 2px solid #f7941d;
+}
+
+.label.danger {
+	border: 2px solid #ed1c24;
+}
+
 .clearfix {
 	clear: both;
 }
@@ -105,14 +135,14 @@ body > section {
 					margin-top: 42px;
 				}
 
-			.hello-macbook {
+			.hello-column > .hello-image {
 				width: 560px;
 				height: 400px;
 				margin-top: 80px;
 				float: right;
 			}
 
-				.hello-macbook div {
+				.hello-image > .hello-macbook {
 					width: 692px;
 					height: 400px;
 					background: url('../img/macbook.png');
