@@ -1,0 +1,132 @@
+/**
+ * Univercube elements styles. Alexey Karetski
+ * http://univercube.com
+ */
+
+/* Buttons */
+
+ .button {
+	padding: 8px 20px 11px;
+	display: inline-block;
+	border-radius: 20px;
+	background: #878787;
+	font-size: 18px;
+	font-weight: 700;
+	color: #fafafa;
+}
+
+.button:hover {
+	text-decoration: none;
+}
+
+.button.primary {
+	background: #2e3192;
+}
+
+.button.success {
+	background: #00a651;
+}
+
+.button.info {
+	background: #00aeef;
+}
+
+.button.warning {
+	background: #f7941d;
+}
+
+.button.danger {
+	background: #ed1c24;
+}
+
+/* Labels */
+
+.label {
+	padding: 6px 19px 9px;
+	display: inline-block;
+	border-radius: 20px;
+	border: 2px solid #878787;
+	font-size: 18px;
+	font-weight: 400;
+	color: #fafafa;
+}
+
+.label.primary {
+	border: 2px solid #2e3192;
+}
+
+.label.success {
+	border: 2px solid #00a651;
+}
+
+.label.info {
+	border: 2px solid #00aeef;
+}
+
+.label.warning {
+	border: 2px solid #f7941d;
+}
+
+.label.danger {
+	border: 2px solid #ed1c24;
+}
+
+/* Annotations */
+
+.annotations > .item {
+				width: 360px;
+				height: 200px;
+				margin-right: 40px;
+				float: left;
+			}
+
+.annotations > .item:last-child {
+	margin: 0;
+}
+
+	/* Annotations [Item] */
+
+	.annotations > .item > h1 {
+		height: 40px;
+		display: block;
+		color: #fafafa;
+	}
+
+	.annotations > .item > p {
+		margin-top: 20px;
+	}
+
+	/* Annotations [Item-List] */
+
+	.annotations > .item.list > li {
+		display: block;
+		margin-bottom: 20px;
+	}
+
+	.annotations > .item.list > li:last-child {
+		margin: 0;
+	}
+
+		.annotations > .item.list > li > a {
+			width: 360px;
+			height: 40px;
+			display: block;
+		}
+
+			.annotations > .item.list > li > a > i {
+				width: 40px;
+				height: 40px;
+				display: block;
+				float: left;
+			}
+
+			.annotations > .item.list > li > a > span {
+				display: inline-block;
+				padding: 6px 20px;
+			}
+
+			.annotations > .item.list > li > a:hover > span {
+				display: inline-block;
+				padding: 6px 20px;
+				text-decoration: underline;
+			}
