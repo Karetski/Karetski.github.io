@@ -5,7 +5,7 @@
  */
 
 body {
-	background: #1e1e1e;
+	background: #1e1e1e url('../img/bgpattern.png') repeat scroll center top;;
 	color: #878787;
 	font: 20px 'Open Sans', sans-serif;
 	font-weight: 300;
@@ -18,24 +18,34 @@ h1 {
 	font-weight: 400;
 }
 
+a {
+	color: #fafafa;
+	font-weight: 400;
+	text-decoration: none;
+}
+
+a:hover {
+	color: #fff;
+	text-decoration: underline;
+}
+
 	body .container {
 		width: 100%;
 		min-width: 1240px;
 	}
 
  		body .container > .wrapper {
- 			width: 1240px;
+ 			width: 1160px;
  			margin: 0 auto;
+ 			padding: 40px;
  		}
 
  	body .header-container {
-		background: url('../img/bgpattern.png') repeat scroll center top;
 		overflow: hidden;
 	}
 
 	 		body .header-container > .wrapper > .info {
 	 			width: 400px;
-	 			padding: 40px 0 40px 40px;
 	 			float: left;
 	 		}
 
@@ -66,173 +76,34 @@ h1 {
 	 			width: 560px;
 	 			height: 400px;
 	 			float: right;
-	 			padding: 120px 0 40px 0;
+	 			margin-top: 80px;
+	 			/*padding: 120px 0 40px 0;*/
 	 		}
 
 	body .features-container {
 		background: #fafafa;
 	}
 
-		body .features-container > .wrapper > .annotations {
-			padding: 40px;
-		}
-
 				body .features-container > .wrapper > .annotations > .item > h1 {
 					color: #464646;
 				}
 
-/*body {
-	background: url('../img/bgpattern.png') repeat scroll center top #1e1e1e;
-	color: #878787;
-	font: 20px 'Open Sans', sans-serif;
-	font-weight: 300;
-	line-height: 1.2;
-	text-decoration: none;
-}
-
-a {
-	color: #fafafa;
-	font-weight: 400;
-	text-decoration: none;
-	-webkit-transition: all 0.1s ease-out;
-	transition: all 0.1s ease-out;
-}
-
-a:hover {
-	color: #fff;
-	text-decoration: underline;
-}
-
-h1 {
-	color: #fafafa;
-	font-size: 32px;
-	font-weight: 400;
-}
-
-body > .section {
-	width: 100%;
-}
-
-	body > .section > .column {
-		width: 1160px;
-		margin: 0 auto;
+	body .social-container {
+		/*background: url('../img/bgpattern.png') repeat scroll center top;*/
 	}
 
-		.hello-section > .column > .info {
-			width: 400px;
-			float: left;
-		}
-
-		.hello-section > .column > .images {
-			width: 560px;
-			float: right;
-		}
-
-body > section {
-	position: relative;
-	padding: 40px;
-	overflow: hidden;
-}
-
-section > .column {
-	width: 1160px;
-	margin: 0 auto;
-}
-
-	.hello-section {
-	}
-
-			.hello-section > .column > .info {
-				width: 400px;
-				height: 400px;
-				float: left;
+			body .social-container > .wrapper > .annotations > .item {
+				height: 160px;
 			}
 
-				.hello-section > .column > .info > .logo {
-					width: 400px;
-					height: 80px;
-					display: block;
-					background: url('../img/hellologo.png') no-repeat;
-				}
-
-				.hello-section > .column > .info > h1 {
-					margin-top: 60px;
-				}
-
-				.hello-section > .column > .info > p {
-					height: 140px;
-					display: inline-block;
-					margin-top: 40px;
-				}
-
-				.hello-section > .column > .info > .label {
-					margin-top: 42px;
-				}
-
-			.hello-section > .column > .image {
-				width: 560px;
-				height: 400px;
-				margin-top: 80px;
-				float: right;
-			}
-
-				.hello-section > .column > .image > .macbook {
-					width: 692px;
-					height: 400px;
-					background: url('../img/macbook.png');
-				}
-
-	.features-section {
-		background: #fafafa;
-	}
-
-		.features.annotations > .item > h1 {
-			color: #464646;
-		}
-
-	.social-section {
-	}
-
-		.social.annotations > .item {
-			height: 160px;
-		}
-
-		.icon.vk {
-			background: url('../img/socialicons.png') no-repeat 0 0;
-		}
-
-		.icon.twitter {
-			background: url('../img/socialicons.png') no-repeat 0 -40px;
-		}
-
-		.icon.instagram {
-			background: url('../img/socialicons.png') no-repeat 0 -80px;
-		}
-
-		.icon.pinterest {
-			background: url('../img/socialicons.png') no-repeat -40px 0px;
-		}
-
-		.icon.youtube {
-			background: url('../img/socialicons.png') no-repeat -40px -40px;
-		}
-
-		.icon.facebook {
-			background: url('../img/socialicons.png') no-repeat -40px -80px;
-		}
-
-	footer {
-	}
-
-		footer > .column {
-			width: 1160px;
-			height: 80px;
-			margin: 0 auto;
-			border-top: 3px solid #fafafa;
+	 	body .footer-container > .wrapper {
+	 		height: 80px;
+	 		padding: 0 40px;
+	 		border-top: 3px solid #fafafa;
 			text-align: center;
-		}
+	 	}
 
-			footer > .column > span {
-				display: inline-block;
-				margin-top: 27px;
-			}*/
+	 		body .footer-container > .wrapper > span {
+	 			display: inline-block;
+				margin-top: 26px;
+	 		}
