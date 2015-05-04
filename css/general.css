@@ -1,6 +1,6 @@
 
 /**
- * Univercube general styles. Alexey Karetski
+ * Univercube general styles. Alexey Karetski.
  * http://univercube.com
  */
 
@@ -34,20 +34,20 @@ a:hover {
 		min-width: 1240px;
 	}
 
- 		body .container > .wrapper {
- 			width: 1160px;
- 			margin: 0 auto;
- 			padding: 40px;
- 		}
+		body .container > .wrapper {
+			width: 1160px;
+			margin: 0 auto;
+			padding: 40px;
+		}
 
- 	body .header-container {
+	body .header-container {
 		overflow: hidden;
 	}
 
-	 		body .header-container > .wrapper > .info {
-	 			width: 400px;
-	 			float: left;
-	 		}
+			body .header-container > .wrapper > .info {
+				width: 400px;
+				float: left;
+			}
 
 	 			body .header-container > .wrapper > .info > .logo {
 					width: 400px;
@@ -72,13 +72,12 @@ a:hover {
 					margin-top: 40px;
 				}
 
-	 		body .header-container > .wrapper > .images {
-	 			width: 560px;
-	 			height: 400px;
-	 			float: right;
-	 			margin-top: 80px;
-	 			/*padding: 120px 0 40px 0;*/
-	 		}
+			body .header-container > .wrapper > .images {
+				width: 560px;
+				height: 400px;
+				float: right;
+				margin-top: 80px;
+			}
 
 	body .features-container {
 		background: #fafafa;
@@ -96,14 +95,14 @@ a:hover {
 				height: 160px;
 			}
 
-	 	body .footer-container > .wrapper {
-	 		height: 80px;
-	 		padding: 0 40px;
-	 		border-top: 3px solid #fafafa;
+		body .footer-container > .wrapper {
+			height: 80px;
+			padding: 0 40px;
+			border-top: 3px solid #fafafa;
 			text-align: center;
-	 	}
+		}
 
-	 		body .footer-container > .wrapper > span {
-	 			display: inline-block;
+			body .footer-container > .wrapper > span {
+				display: inline-block;
 				margin-top: 26px;
-	 		}
+			}

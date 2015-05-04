@@ -1,5 +1,5 @@
 /**
- * Univercube elements styles. Alexey Karetski
+ * Univercube Elements. Alexey Karetski.
  * http://univercube.com
  */
 
@@ -9,7 +9,7 @@
 	clear: both;
 }
 
- .button {
+.button {
 	padding: 8px 20px 11px;
 	display: inline-block;
 	border-radius: 20px;
@@ -112,7 +112,7 @@
 	}
 
 		.annotations > .item.list > li > a {
-			width: 360px;
+			width: inherit;
 			height: 40px;
 			display: block;
 		}
