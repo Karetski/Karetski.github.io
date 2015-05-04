@@ -5,6 +5,10 @@
 
 /* Buttons */
 
+.clearfix {
+	clear: both;
+}
+
  .button {
 	padding: 8px 20px 11px;
 	display: inline-block;
@@ -74,13 +78,13 @@
 /* Annotations */
 
 .annotations > .item {
-				width: 360px;
-				height: 200px;
-				margin-right: 40px;
-				float: left;
-			}
+	width: 360px;
+	height: 200px;
+	margin-left: 40px;
+	float: left;
+}
 
-.annotations > .item:last-child {
+.annotations > .item:first-child {
 	margin: 0;
 }
 
@@ -130,3 +134,29 @@
 				padding: 6px 20px;
 				text-decoration: underline;
 			}
+
+/* Icons */
+
+.icon.vk {
+	background: url('../img/socialicons.png') no-repeat 0 0;
+}
+
+.icon.twitter {
+	background: url('../img/socialicons.png') no-repeat 0 -40px;
+}
+
+.icon.instagram {
+	background: url('../img/socialicons.png') no-repeat 0 -80px;
+}
+
+.icon.pinterest {
+	background: url('../img/socialicons.png') no-repeat -40px 0px;
+}
+
+.icon.youtube {
+	background: url('../img/socialicons.png') no-repeat -40px -40px;
+}
+
+.icon.facebook {
+	background: url('../img/socialicons.png') no-repeat -40px -80px;
+}

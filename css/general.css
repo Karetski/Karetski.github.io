@@ -1,8 +1,87 @@
+
 /**
  * Univercube general styles. Alexey Karetski
  * http://univercube.com
  */
+
 body {
+	background: #1e1e1e;
+	color: #878787;
+	font: 20px 'Open Sans', sans-serif;
+	font-weight: 300;
+	line-height: 1.2;
+}
+
+h1 {
+	color: #fafafa;
+	font-size: 32px;
+	font-weight: 400;
+}
+
+	body .container {
+		width: 100%;
+		min-width: 1240px;
+	}
+
+ 		body .container > .wrapper {
+ 			width: 1240px;
+ 			margin: 0 auto;
+ 		}
+
+ 	body .header-container {
+		background: url('../img/bgpattern.png') repeat scroll center top;
+		overflow: hidden;
+	}
+
+	 		body .header-container > .wrapper > .info {
+	 			width: 400px;
+	 			padding: 40px 0 40px 40px;
+	 			float: left;
+	 		}
+
+	 			body .header-container > .wrapper > .info > .logo {
+					width: 400px;
+					height: 80px;
+					display: block;
+					background: url('../img/hellologo.png') no-repeat;
+				}
+
+				body .header-container > .wrapper > .info > h1 {
+					height: 80px;
+					display: inline-block;
+					margin-top: 60px;
+				}
+
+				body .header-container > .wrapper > .info > p {
+					height: 140px;
+					display: inline-block;
+					margin-top: 40px;
+				}
+
+				body .header-container > .wrapper > .info > .label {
+					margin-top: 40px;
+				}
+
+	 		body .header-container > .wrapper > .images {
+	 			width: 560px;
+	 			height: 400px;
+	 			float: right;
+	 			padding: 120px 0 40px 0;
+	 		}
+
+	body .features-container {
+		background: #fafafa;
+	}
+
+		body .features-container > .wrapper > .annotations {
+			padding: 40px;
+		}
+
+				body .features-container > .wrapper > .annotations > .item > h1 {
+					color: #464646;
+				}
+
+/*body {
 	background: url('../img/bgpattern.png') repeat scroll center top #1e1e1e;
 	color: #878787;
 	font: 20px 'Open Sans', sans-serif;
@@ -30,11 +109,27 @@ h1 {
 	font-weight: 400;
 }
 
-.clearfix {
-	clear: both;
+body > .section {
+	width: 100%;
 }
 
+	body > .section > .column {
+		width: 1160px;
+		margin: 0 auto;
+	}
+
+		.hello-section > .column > .info {
+			width: 400px;
+			float: left;
+		}
+
+		.hello-section > .column > .images {
+			width: 560px;
+			float: right;
+		}
+
 body > section {
+	position: relative;
 	padding: 40px;
 	overflow: hidden;
 }
@@ -140,4 +235,4 @@ section > .column {
 			footer > .column > span {
 				display: inline-block;
 				margin-top: 27px;
-			}
+			}*/
