@@ -7,7 +7,7 @@
 body {
 	background: #1e1e1e url('../img/bgpattern.png') repeat scroll center top;;
 	color: #878787;
-	font: 20px 'Open Sans', sans-serif;
+	font: 20px 'Open Sans', Arial, sans-serif;
 	font-weight: 300;
 	line-height: 1.2;
 }
