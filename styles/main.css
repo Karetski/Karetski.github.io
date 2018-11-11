@@ -14,97 +14,166 @@ a:hover {
 h1 {
     font-size: 48px;
     font-weight: 800;
+    padding: 8px 0;
 }
 
-h4 {
+h2 {
     font-size: 32px;
     font-weight: 400;
+    padding: 6px 0;
 }
 
-body > header {
+header {
     width: 100%;
-    min-width: 720px;
+    min-width: 1216px;
     background: #ccc url(../images/gradientBackground.png) no-repeat center center;
     background-size: 100% 100%;
     height: 256px;
     padding: 256px 0;
+    display: flex;
+    justify-content: flex-start;
 }
 
-    body > header > div {
+    header > div {
         width: 50%;
         height: 100%;
+        display: flex;
     }
 
-        header > .logoContainer {
-            float: left;
+    .logoContainer {
+        justify-content: flex-end;
+    }
+
+        .logoContainer > img {
+            margin: 0 32px;
         }
 
-            .logoContainer > img {
-                margin: 0 32px;
-                float: right;
-            }
+    .contactsContainer {
+        justify-content: flex-start;
+    }
 
-        header > .contactsContainer {
-            float: right;
+        .contactsContainer > .contactsStylingArrow {
+            width: 70px;
+            height: 256px;
+            background: url(../images/angleShapeLeft.svg);
         }
 
-            .contactsContainer > div, ul {
-                float: left;
+        .contactsContainer > .contactsList {
+            width: 270px;
+            margin: 0;
+            padding: 20px 0 20px 14px;
+            background: #FFFF1A;
+        }
+
+            .contactsList > li {
+                padding: 12px;
+                height: 48px;
+                display: flex;
+                position: relative;
             }
 
-            .contactsContainer > .contactsStylingArrow {
-                width: 70px;
-                height: 256px;
-                background: url(../images/angleShapeLeft.svg);
+            .contactsList > li:hover {
+                border-radius: 16px 0 0 16px;
+                background-color: rgba(0, 0, 0, 0.05);
             }
 
-            .contactsContainer > .contactsList {
-                width: 256px;
-                height: 240px;
-                margin: 0;
-                padding: 8px 0 8px 26px;
-                background: #FFFF1A;
-            }
-
-                .contactsList > li {
-                    margin: 24px 0;
-                    height: 48px;
+                .contactsList > li > a {
+                    width: 100%;
+                    height: 100%;
+                    top: 0;
+                    left: 0;
+                    display: block;
+                    position: absolute;
+                    border-radius: 16px 0 0 16px;
                 }
 
-                    .contactsList > li > a {
-                        width: inherit;
-                        height: inherit;
-                        display: block;
+                .contactsList > li > img {
+                    width: 48px;
+                    height: 48px;
+                    object-fit: contain;
+                }
+
+                .contactsList > li > ul {
+                    padding: 0 24px;
+                }
+                
+                    .contactsList > li > ul > li {
+                        font-size: 18px;
+                        padding: 2px 0 4px;
                     }
 
-                        .contactsList > li > a > img, div {
-                            float: left;
-                        }
+                    .contactsList > li > ul > .contactValue {
+                        color: #1A40FF;
+                    }
 
-                        .contactsList > li > a > img {
-                            width: 48px;
-                            height: 48px;
-                            object-fit: contain;
-                        }
-
-                        .contactsList > li > a > ul {
-                            margin: 1px 24px;
-                        }
-                            .contactsList > li > a > ul > li {
-                                font: 18px;
-                                padding: 3px 0;
-                            }
-
-                            .contactsList > li > a > ul > .contactTitle {
-                                color: #000;
-                            }
-
-                            .contactsList > li > a:hover > ul > .contactValue {
-                                text-decoration: underline;
-                            }
-
-body > main {
-    width: 1280px;
-    margin: 0 auto;
+main {
+    width: 100%;
 }
+
+    main > section {
+        width: inherit;
+        min-height: 304px;
+        background-image: linear-gradient(to bottom, #F2F2F2 , #FFF 304px);
+    }
+
+.wrapper {
+    width: 1152px;
+    margin: 0 auto;
+    padding: 64px 32px;
+}
+
+    .wrapper > .header {
+        padding: 32px;
+        height: 112px;
+    }
+
+    .about > .header {
+        display: flex;
+        justify-content: space-between;
+    }
+
+    .about > .header > .tags {
+        max-width: 464px;
+        display: flex;
+        flex-flow: wrap;
+        align-content: flex-start;
+    }
+
+        .about > .header > .tags > li {
+            font-size: 24px;
+            padding: 12px 16px 12px 16px;
+            margin: 0 0 16px 16px;
+            border-radius: 16px;
+            background-color: #FFFF1A;
+        }
+
+        .about > .header > .tags > .more {
+            width: 48px;
+            height: 48px;
+            padding: 0;
+            background: #1A40FF url(../images/iconMore.svg) no-repeat center;
+            position: relative;
+        }
+
+            .about > .header > .tags > .more > a {
+                width: 100%;
+                height: 100%;
+                top: 0;
+                left: 0;
+                display: block;
+                position: absolute;
+                border-radius: 16px;
+            }
+
+    .about > .description {
+        width: 544px;
+        height: 160px;
+        padding: 0 32px 32px 32px;
+    }
+
+        .about > .description > span {
+            font-size: 20px;
+            color: #7F7F7F;
+            line-height: 1.35;
+        }
 
