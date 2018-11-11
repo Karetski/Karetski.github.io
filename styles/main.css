@@ -19,8 +19,26 @@ h1 {
 
 h2 {
     font-size: 32px;
+    font-weight: 800;
+    padding: 4px 0;
+}
+
+h3 {
+    font-size: 32px;
     font-weight: 400;
     padding: 6px 0;
+}
+
+.primaryText {
+    font-size: 20px;
+    color: #000;
+    line-height: 1.35;
+}
+
+.secondaryText {
+    font-size: 20px;
+    color: #7F7F7F;
+    line-height: 1.35;
 }
 
 header {
@@ -108,11 +126,11 @@ header {
 
 main {
     width: 100%;
-    min-width: 1216px;
 }
 
     main > section {
         width: inherit;
+        min-width: 1216px;
         min-height: 304px;
         background-image: linear-gradient(to bottom, #F2F2F2 , #FFF 304px);
     }
@@ -142,7 +160,7 @@ main {
 
         .about > .header > .tags > li {
             font-size: 24px;
-            padding: 12px 16px 12px 16px;
+            padding: 12px 16px;
             margin: 0 0 16px 16px;
             border-radius: 16px;
             background-color: #FFFF1A;
@@ -172,9 +190,49 @@ main {
         padding: 0 32px 32px 32px;
     }
 
-        .about > .description > span {
-            font-size: 20px;
-            color: #7F7F7F;
-            line-height: 1.35;
-        }
+            .grid > .item {
+                width: 512px;
+                margin: 64px 0 32px 0;
+                background-color: #FFF;
+                border-radius: 32px;
+                box-shadow: 0 16px 48px rgba(0,0,0,0.1);
+            }
 
+                .grid > .item > img {
+                    width: 100%;
+                    height: 192px;;
+                    border-radius: 32px 32px 0 0;
+                }
+
+                .grid > .item > .header {
+                    padding: 24px 32px 0 32px;
+                    display: flex;
+                    justify-content: space-between;
+                }
+
+                    .grid > .item > .header > .title > .timePeriod {
+                        padding: 2px 0;
+                    }
+
+                .grid > .item > .content {
+                    padding: 0 32px;
+                }
+
+                    .grid > .item > .content > p {
+                        padding: 24px 0 0 0;
+                    }
+                    
+                .grid > .item > .tags {
+                    display: flex;
+                    flex-flow: wrap;
+                    align-content: flex-start;
+                    padding: 18px 26px 26px 26px;
+                }
+            
+                    .grid > .item > .tags > li {
+                        font-size: 20px;
+                        padding: 10px 12px;
+                        margin: 6px;
+                        border-radius: 12px;
+                        background-color: #FFFF1A;
+                    }
