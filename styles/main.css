@@ -29,6 +29,18 @@ h3 {
     padding: 6px 0;
 }
 
+h5 { /* Incompleted */
+    font-size: 24px;
+    font-weight: 400;
+    padding: 4px 0;
+}
+
+h5 {
+    font-size: 24px;
+    font-weight: 800;
+    padding: 5px 0;
+}
+
 .primaryText {
     font-size: 20px;
     color: #000;
@@ -221,6 +233,40 @@ main {
                     .grid > .item > .content > p {
                         padding: 24px 0 0 0;
                     }
+
+                    .grid > .item > .content > .promo {
+                        height: 64px;
+                        display: flex;
+                        border-radius: 24px;
+                        margin: 24px 0 0 0;
+                        padding: 16px;
+                        background: #F2F2F2;
+                    }
+
+                        .grid > .item > .content > .promo > img {
+                            width: 64px;
+                            height: 64px;
+                            object-fit: contain;
+                        }
+
+                        .grid > .item > .content > .promo > .description {
+                            padding: 2px 16px;
+                            flex: 1;
+                        }
+
+                            .grid > .item > .content > .promo > .description > p {
+                                font-size: 16px;
+                            }
+
+                        .grid > .item > .content > .promo > a {
+                            font-size: 20px;
+                            font-weight: 800;
+                            padding: 10px 12px;
+                            border-radius: 12px;
+                            align-self: center;
+                            color: #FFF;
+                            background-color: #1A40FF;
+                        }
                     
                 .grid > .item > .tags {
                     display: flex;
