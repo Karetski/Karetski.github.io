@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="16px" height="6px" viewBox="0 0 16 6" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 52.5 (67469) - http://www.bohemiancoding.com/sketch -->
+    <title>ArrowSmoothShape</title>
+    <desc>Created with Sketch.</desc>
+    <g id="Main" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="Desktop" transform="translate(-632.000000, -746.000000)" fill="#000000" fill-rule="nonzero">
+            <g id="Header">
+                <g id="Tip" transform="translate(533.000000, 717.000000)">
+                    <path d="M113.504032,29.131928 C113.98355,28.857918 114.594404,29.0245147 114.868414,29.5040322 C115.142424,29.9835496 114.975828,30.5944043 114.49631,30.8684143 L107.49631,34.8684143 C107.188877,35.0440901 106.811465,35.0440901 106.504032,34.8684143 L99.5040322,30.8684143 C99.0245147,30.5944043 98.857918,29.9835496 99.131928,29.5040322 C99.4059379,29.0245147 100.016793,28.857918 100.49631,29.131928 L107.000171,32.84842 L113.504032,29.131928 Z" id="ArrowSmoothShape"></path>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>
