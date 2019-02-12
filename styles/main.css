@@ -247,6 +247,12 @@ main {
                         padding: 2px 0;
                     }
 
+                    .grid > .item > .header > img {
+                        width: 72px;
+                        height: 72px;
+                        object-fit: contain;
+                    }
+
                 .grid > .item > .content {
                     padding: 0 32px;
                 }
