@@ -1,12 +1,18 @@
 .bounce {
-    animation: bounce 1.5s infinite;
+    animation: bounce 2s infinite;
 }
 
 @keyframes bounce {
-    0%, 80%, 100% {
-      transform: translateY(0);
+    0% {
+      transform: translateY(-12px);
+      opacity: 0;
     }
-    40% {
+    40%, 60% {
+      transform: translateY(0);
+      opacity: 1;
+    }
+    100% {
       transform: translateY(12px);
+      opacity: 0;
     }
 }

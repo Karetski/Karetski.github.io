@@ -33,7 +33,7 @@ h3 {
     padding: 6px 0;
 }
 
-h5 { /* Incompleted */
+h4 { /* Incompleted */
     font-size: 24px;
     font-weight: 400;
     padding: 4px 0;
@@ -139,8 +139,9 @@ header {
                         color: #1A40FF;
                     }
 
-.seeMore {
+.hint {
     width: 100%;
+    min-width: 1216px;
     height: 64px;
     padding: 16px 0;
     margin: -96px 0 0;
@@ -150,7 +151,7 @@ header {
     align-items: center;
 }
 
-    .seeMore > .arrow {
+    .hint > .arrow {
         width: 16px;
         height: 6px;
         padding: 2px 0 0;
@@ -165,6 +166,10 @@ main {
         width: inherit;
         min-width: 1216px;
         min-height: 304px;
+        background: #FFF;
+    }
+
+    main > section ~ section {
         background-image: linear-gradient(to bottom, #F2F2F2 , #FFF 304px);
     }
 
@@ -309,3 +314,83 @@ main {
                         border-radius: 12px;
                         background-color: #FFFF1A;
                     }
+
+footer {
+    width: inherit;
+    min-width: 1216px;
+    min-height: 304px;
+    background-image: linear-gradient(to top, #F2F2F2 , #FFF 304px);
+}
+
+    .footer > .header {
+        display: flex;
+        justify-content: space-between;
+    }
+
+        .copyright {
+            display: flex;
+            flex-flow: column;
+            justify-content: space-between;
+            align-items: flex-end;
+        }
+
+            .copyright > img {
+                height: 40px;
+                object-fit: contain;
+            }
+
+            .copyright > p {
+                color: #7F7F7F;
+                font-size: 15px;
+                line-height: 1.35;
+                text-align: right;
+            }
+
+        .contactsCollection {
+            display: grid;
+            grid-auto-flow: column;
+            grid-template-rows: repeat(2, auto);
+            grid-auto-columns: min-content;
+            grid-gap: 32px 0;
+        }
+
+            .contactsCollection > li {
+                width: 224px;
+                height: 40px;
+                display: flex;
+                position: relative;
+            }
+
+                .contactsCollection > li > a {
+                    width: 100%;
+                    height: 100%;
+                    top: 0;
+                    left: 0;
+                    display: block;
+                    position: absolute;
+                }
+
+                .contactsCollection > li > img {
+                    width: 40px;
+                    height: 40px;
+                    object-fit: contain;
+                }
+
+                .contactsCollection > li > ul {
+                    padding: 0 20px;
+                }
+                
+                    .contactsCollection > li > ul > li {
+                        font-size: 15px;
+                        padding: 2px 0 4px;
+                    }
+
+                    .contactsCollection > li > ul > .contactValue {
+                        color: #1A40FF;
+                    }
+
+                    .contactsCollection > li:hover > ul > .contactValue {
+                        cursor: pointer;
+                        text-decoration: underline;
+                    }
+
