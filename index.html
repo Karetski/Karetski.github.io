@@ -18,6 +18,10 @@
 
     <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,800" rel="stylesheet" />
 
+    <link href="favicon.png" rel="icon" type="image/x-icon">
+	<link rel="icon" href="images/logo.svg" type="image/svg+xml">
+
+    <!-- Scripts -->
     <script src="https://unpkg.com/masonry-layout@4/dist/masonry.pkgd.min.js"></script>
 </head>
 
@@ -63,32 +67,32 @@
     <main>
         <section>
             <div class="wrapper about">
-                <div class="header">
-                    <div class="personal">
-                        <h1>Alexey Karetski</h1>
-                        <h3>Software Engineer</h3>
+                <div class="ground">
+                    <div class="description">
+                        <div class="mainHeading">
+                                <h1>Alexey Karetski</h1>
+                                <h3>Software Engineer</h3>
+                            </div>
+                        <p class="secondaryText">
+                            Experienced software engineer creating modern applications using Swift and Objective-C programming languages and corresponding frameworks. Participated in development of applications that are leading in Finance, Entertaiment and Sports industries. Really interested in a new technologies looking to solve old problems.
+                        </p>
                     </div>
                     <ul class="tags">
                         <li>Swift</li>
                         <li>Objective-C</li>
-                        <li>Xcode</li>
-                        <li>Git</li>
+                        <li>UIKit</li>
+                        <li>UI/UX Design</li>
                         <li class="more">
                             <a href="#moreInfo"></a>
                         </li>
                     </ul>
                 </div>
-                <div class="description">
-                    <span class="secondaryText">
-                        Experienced software engineer creating modern iOS applications using Swift and Objective-C programming languages and connected frameworks. Participated in development of applications that are leading in Finance, Entertaiment and Sports industries. Really interested in a new technologies looking to solve old problems.
-                    </span>
-                </div>
             </div>
         </section>
         <section>
             <div class="wrapper commercial" id="moreInfo">
-                <div class="header">
-                    <h1>Commercial</h1>
+                <div class="ground mainHeading">
+                    <h1>Experience</h1>
                     <h3>Projects always created with passion and attention to detail</h3>
                 </div>
                 <div class="grid">
@@ -106,22 +110,25 @@
                             <div class="promo">
                                 <img src="images/app/powerEtrade.png">
                                 <div class="description">
-                                    <h5><a href="">Power E*TRADE</a></h5>
+                                    <h5>Power E*TRADE</h5>
                                     <p class="secondaryText">Options, stocks, futures, ETFs</p>
                                 </div>
                                 <a href="https://itunes.apple.com/us/app/power-e-trade-advanced-trading/id1111881020?l=en" target="_blank">View</a>
                             </div>
-                            <p class="primaryText">As a member of a team I'm responsible for application redesign, application themes support and implementation of the new features on both UI and business levels. I also work on application stabilizing by fixing bugs and improving performance.</p>
+                            <p class="primaryText">My main responsibilities as a member of a team are application redesign, application themes support and implementation of the new features on both UI and business levels. I also work on application stabilizing by fixing bugs and improving performance.</p>
                         </div>
                         <ul class="tags">
                             <li>Swift</li>
                             <li>UIKit</li>
+                            <li>XCTest</li>
                             <li>RxSwift</li>
                             <li>Stylish</li>
+                            <li>Cocoapods</li>
+                            <li>Fastlane</li>
                         </ul>
                     </div>
                     <div class="item">
-                        <img src="images/artworks/liberty.png">
+                        <img src="images/artworks/liberty.svg">
                         <div class="header">
                             <div class="title">
                                 <h2><a href="https://itunes.apple.com/de/app/horizon-go/id549148968?l=en" target="_blank">Liberty Global</a></h2>
@@ -134,19 +141,25 @@
                             <div class="promo">
                                 <img src="images/app/horizon.png">
                                 <div class="description">
-                                    <h5><a href="">Horizon Go</a></h5>
+                                    <h5>Horizon Go</h5>
                                     <p class="secondaryText">Turn your device into a TV</p>
                                 </div>
                                 <a href="https://itunes.apple.com/de/app/horizon-go/id549148968?l=en" target="_blank">View</a>
                             </div>
-                            <p class="primaryText">During my work on this project I was responsible for implementing abstraction layers to work with nDVR(Network Digital Video Recording), video bookmarks, offline viewing using Penthera API functionality etc. I was also creating responsive user interface to allow this functionality be available to the concumers on both tablets and phones.</p>
-                            <p class="primaryText">I was involved in development of the new brands based on our unified platform so many more people could use the platform internationally.</p>
+                            <p class="primaryText">During work on this project I was responsible for implementing abstraction layers to work with nDVR(Network Digital Video Recording), video bookmarks, offline viewing etc. I was also creating responsive user interface to allow this functionality be available to the concumers on both tablets and phones.</p>
+                            <p class="primaryText">Was involved in development of the new branded applications based on our unified platform, so many more people could use the platform internationally.</p>
                         </div>
                         <ul class="tags">
                             <li>Swift</li>
                             <li>Objective-C</li>
                             <li>UIKit</li>
+                            <li>CoreData</li>
+                            <li>Alamofire</li>
                             <li>ReactiveCocoa</li>
+                            <li>Swinject</li>
+                            <li>SwiftGen</li>
+                            <li>Cocoapods</li>
+                            <li>SwiftLint</li>
                         </ul>
                     </div>
                     <div class="item">
@@ -160,21 +173,24 @@
                         </div>
                         <div class="content">
                             <p class="primaryText">This project consisted of several applications for horse racing betting with the main application for iPhone called RacingPost.</p>
-                            <div class="promo">
+                            <!-- <div class="promo">
                                 <img src="images/app/racingpost.png">
                                 <div class="description">
                                     <h5><a href="">Racing Post</a></h5>
                                     <p class="secondaryText">Horse Racing Cards & Results</p>
                                 </div>
                                 <a href="https://itunes.apple.com/by/app/racing-post-horse-racing/id339003373?l=en" target="_blank">View</a>
-                            </div>
-                            <p class="primaryText">I was generally working on implementation of main features of the application including implementation of high-performant custom user interface components, work with real-time data updates such as prices, comments etc.</p>
+                            </div> -->
+                            <p class="primaryText">I was generally working on implementation of the main features of the application including implementation of high-performant custom user interface components, work with real-time data updates such as prices, comments etc.</p>
                         </div>
                         <ul class="tags">
                             <li>Objective-C</li>
                             <li>Swift</li>
                             <li>UIKit</li>
                             <li>Diffusion</li>
+                            <li>Quick</li>
+                            <li>Nimble</li>
+                            <li>Cocoapods</li>
                         </ul>
                     </div>
                 </div> 
@@ -182,9 +198,9 @@
         </section>
         <section>
             <div class="wrapper personal">
-                <div class="header">
+                <div class="ground mainHeading">
                     <h1>Personal</h1>
-                    <h3>Projects made to help people solve their problems</h3>
+                    <h3>Side projects made to help people solve their problems</h3>
                 </div>
                 <div class="grid">
                     <div class="item">
@@ -200,12 +216,12 @@
                             <div class="promo">
                                 <img src="images/app/snowonder.png">
                                 <div class="description">
-                                    <h5><a href="">Snowonder</a></h5>
+                                    <h5>Snowonder</h5>
                                     <p class="secondaryText">Magical import declarations…</p>
                                 </div>
                                 <a href="https://github.com/Karetski/Snowonder" target="_blank">View</a>
                             </div>
-                            <p class="primaryText">Current version of this tool has been created as an Xcode Extension, and works perfect on Xcode of version 8 and higher, but there are also earlier versions that support Xcode 7.3 and are available via Alcatraz package manager.</p>
+                            <p class="primaryText">Current version of this tool has been created as an Xcode Extension, and works on Xcode of version 8 and higher, but there are also earlier versions that support Xcode 7.3 and are available via Alcatraz package manager.</p>
                         </div>
                         <ul class="tags">
                             <li>Swift</li>
@@ -214,7 +230,7 @@
                         </ul>
                     </div>
                     <div class="item">
-                        <img src="images/artworks/snowonder.png">
+                        <img src="images/artworks/snowonder.svg">
                         <div class="header">
                             <div class="title">
                                 <h2><a href="">Testament</a></h2>
@@ -227,8 +243,9 @@
                         </div>
                         <ul class="tags">
                             <li>Swift</li>
-                            <li>XcodeKit</li>
-                            <li>AppKit</li>
+                            <li>XCTest</li>
+                            <li>Swift PM</li>
+                            <li>Cocoapods</li>
                         </ul>
                     </div>
                 </div> 
@@ -237,7 +254,7 @@
     </main>
     <footer>
         <div class="wrapper footer">
-            <div class="header">
+            <div class="ground">
                 <ul class="contactsCollection">
                     <li>
                         <a href="https://www.instagram.com/karetski/" target="_blank"></a>

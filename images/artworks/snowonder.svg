@@ -1,24 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg width="512px" height="192px" viewBox="0 0 512 192" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
     <!-- Generator: Sketch 52.5 (67469) - http://www.bohemiancoding.com/sketch -->
-    <title>Snowonder</title>
+    <title>Snowonder Abstract</title>
     <desc>Created with Sketch.</desc>
     <defs>
-        <linearGradient x1="1.29588282e-05%" y1="49.9999747%" x2="99.9999669%" y2="49.9999747%" id="linearGradient-1">
-            <stop stop-color="#993D7A" offset="0%"></stop>
-            <stop stop-color="#6666FF" offset="100%"></stop>
+        <linearGradient x1="0%" y1="50%" x2="100%" y2="50%" id="linearGradient-1">
+            <stop stop-color="#E1ADDC" offset="0%"></stop>
+            <stop stop-color="#FFF5DB" offset="100%"></stop>
         </linearGradient>
         <linearGradient x1="100%" y1="50%" x2="0%" y2="50%" id="linearGradient-2">
-            <stop stop-color="#000000" stop-opacity="0" offset="0%"></stop>
-            <stop stop-color="#000000" offset="100%"></stop>
+            <stop stop-color="#C238B5" offset="0%"></stop>
+            <stop stop-color="#E1ADDC" offset="100%"></stop>
+        </linearGradient>
+        <linearGradient x1="100%" y1="50%" x2="0%" y2="50%" id="linearGradient-3">
+            <stop stop-color="#C238B5" offset="0%"></stop>
+            <stop stop-color="#810075" offset="100%"></stop>
         </linearGradient>
     </defs>
-    <g id="Snowonder" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+    <g id="Snowonder-Abstract" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
         <rect id="Rectangle" fill="url(#linearGradient-1)" x="0" y="0" width="512" height="192"></rect>
-        <circle id="Oval-Copy" fill="url(#linearGradient-1)" fill-rule="nonzero" opacity="0.5" cx="256" cy="192" r="96"></circle>
-        <circle id="Oval" fill="url(#linearGradient-1)" fill-rule="nonzero" opacity="0.25" cx="208" cy="192" r="48"></circle>
-        <circle id="Oval-Copy-2" fill="url(#linearGradient-1)" fill-rule="nonzero" opacity="0.5" cx="448" cy="224" r="64"></circle>
-        <rect id="Shadow" fill-opacity="0.1" fill="url(#linearGradient-2)" x="0" y="0" width="256" height="192"></rect>
-        <path d="M-0.167290873,-0.166565816 C-50.3077512,49.9745611 -53.1110916,129.525096 -8.5796455,182.956564 L16.8034188,160.111507 L37.5451379,180.853559 L15.3427484,205.522955 C68.5705498,244.824054 143.960407,240.373377 192.166529,192.167254 C245.277997,139.055787 245.277664,52.9452353 192.166529,-0.166565816 C165.610796,-26.7222997 130.805374,-40 95.9996193,-40 C61.1941978,-40 26.388443,-26.7222997 -0.167290873,-0.166565816 Z M26.231776,150.683483 L52.6305095,124.284749 C93.8782806,83.0366448 71.3045567,56.2205769 63.9442048,48.8595583 C60.1728619,45.0885488 52.6305095,37.5461963 28.1171141,31.889182 C88.4572668,16.8041438 129.940705,58.2879155 135.59772,63.9449298 C137.483391,65.8302679 137.483391,65.8302679 139.368729,67.7159394 C156.339439,84.686649 148.797086,92.2293348 160.110782,103.542697 C163.881791,107.31404 167.653467,103.542697 171.424477,107.31404 L178.966829,114.856392 C180.852501,116.742397 182.738172,118.627402 178.966829,122.399078 L154.453767,146.91214 C150.682758,150.683483 148.797086,148.797811 146.911415,146.91214 L139.368729,139.369454 C135.59772,135.598445 139.368729,131.827102 135.59772,128.056092 C124.284024,116.742397 107.313315,111.085383 65.8295429,152.569488 L46.9734951,171.425202 L26.231776,150.683483 Z" id="Logo" fill="url(#linearGradient-1)"></path>
+        <path d="M2.5243549e-28,128 C96,160 128,63.9855836 192,95.9855836 C256,127.985584 256,160 320,160 C384,160 416,63.9855836 512,128 C512,83 512,34.6524499 512,-2.84217094e-14 C469.333333,-2.84217094e-14 298.666667,-2.84217094e-14 -2.27373675e-13,-2.84217094e-14 C-7.57912251e-14,42.6666667 2.5243549e-28,85.3333333 2.5243549e-28,128 Z" id="Path-3-Copy" fill="url(#linearGradient-2)" fill-rule="nonzero" transform="translate(256.000000, 80.000000) scale(-1, 1) translate(-256.000000, -80.000000) "></path>
+        <path d="M5.45696821e-12,64 C64,95.9855836 128,32 192,32 C256,32 320,96 384,64 C448,32 448,-8.8817842e-16 512,32 C511.999564,-31.9855836 512,-8.2600593e-14 512,-8.2600593e-14 C469.333333,-8.2600593e-14 298.666667,-7.54951657e-14 -7.27595761e-12,-6.03961325e-14 C1.2126596e-12,3.27737837e-13 5.45696821e-12,21.3333333 5.45696821e-12,64 Z" id="Path-3" fill="url(#linearGradient-3)" fill-rule="nonzero"></path>
     </g>
 </svg>

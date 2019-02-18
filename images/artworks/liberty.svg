@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="512px" height="192px" viewBox="0 0 512 192" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 52.5 (67469) - http://www.bohemiancoding.com/sketch -->
+    <title>Liberty Abstract</title>
+    <desc>Created with Sketch.</desc>
+    <defs>
+        <linearGradient x1="100%" y1="50%" x2="0%" y2="50%" id="linearGradient-1">
+            <stop stop-color="#FFC300" offset="0%"></stop>
+            <stop stop-color="#FF5733" offset="100%"></stop>
+        </linearGradient>
+        <linearGradient x1="0%" y1="50%" x2="100%" y2="50%" id="linearGradient-2">
+            <stop stop-color="#C70039" offset="0%"></stop>
+            <stop stop-color="#FF5733" offset="100%"></stop>
+        </linearGradient>
+        <linearGradient x1="0%" y1="50%" x2="100%" y2="50%" id="linearGradient-3">
+            <stop stop-color="#C70039" offset="0%"></stop>
+            <stop stop-color="#900C3F" offset="100%"></stop>
+        </linearGradient>
+    </defs>
+    <g id="Liberty-Abstract" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <rect id="Rectangle" fill="url(#linearGradient-1)" x="0" y="0" width="512" height="192"></rect>
+        <path d="M-2.27373675e-13,192 C64,192 96,64 160,64 C224,64 223.767072,160 288,160 C352.232928,160 416,65 512,160 C512,115 512,34.6524499 512,-2.84217094e-14 C469.333333,-2.84217094e-14 298.666667,-2.84217094e-14 -2.27373675e-13,-2.84217094e-14 C-2.27373675e-13,85.3333333 -2.27373675e-13,149.333333 -2.27373675e-13,192 Z" id="Path-3-Copy" fill="url(#linearGradient-2)" fill-rule="nonzero"></path>
+        <path d="M-0.000436420396,32 C63.9995636,-7.46069873e-14 127.999564,95.9855836 191.999564,95.9855836 C255.999564,95.9855836 319.999564,32 383.999564,32 C447.999564,32 447.999564,96 512,95.9859861 C511.999564,32 511.999564,-7.46069873e-14 511.999564,-7.46069873e-14 C469.332897,-7.46069873e-14 298.66623,-6.75015599e-14 -0.000436420396,-5.32907052e-14 C-0.000436420396,-21.3333333 -0.000436420396,-10.6666667 -0.000436420396,32 Z" id="Path-3" fill="url(#linearGradient-3)" fill-rule="nonzero" transform="translate(255.999782, 42.659660) scale(-1, 1) translate(-255.999782, -42.659660) "></path>
+    </g>
+</svg>
