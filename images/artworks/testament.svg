@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="512px" height="192px" viewBox="0 0 512 192" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 52.5 (67469) - http://www.bohemiancoding.com/sketch -->
+    <title>Racing Post Abstract</title>
+    <desc>Created with Sketch.</desc>
+    <defs>
+        <linearGradient x1="0%" y1="50%" x2="100%" y2="50%" id="linearGradient-1">
+            <stop stop-color="#C6E377" offset="0%"></stop>
+            <stop stop-color="#FBFAD3" offset="100%"></stop>
+        </linearGradient>
+        <linearGradient x1="100%" y1="50%" x2="0%" y2="50%" id="linearGradient-2">
+            <stop stop-color="#C6E377" offset="0%"></stop>
+            <stop stop-color="#729D39" offset="100%"></stop>
+        </linearGradient>
+        <linearGradient x1="0%" y1="50%" x2="100%" y2="50%" id="linearGradient-3">
+            <stop stop-color="#729D39" offset="0%"></stop>
+            <stop stop-color="#36622B" offset="100%"></stop>
+        </linearGradient>
+    </defs>
+    <g id="Racing-Post-Abstract" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <rect id="Rectangle" fill="url(#linearGradient-1)" x="0" y="0" width="512" height="192"></rect>
+        <path d="M-1.70530257e-13,160 C64,160 96,128 192,128 C288,128 320,160 384,160 C448,160 512,64 512,-2.84217094e-14 C469.333333,-2.84217094e-14 298.666667,-2.84217094e-14 -1.70530257e-13,-2.84217094e-14 C-5.68434189e-14,64 -5.68434189e-14,117.333333 -1.70530257e-13,160 Z" id="Path-3-Copy" fill="url(#linearGradient-2)" fill-rule="nonzero"></path>
+        <path d="M-2.22044605e-16,96 C64,32 128,64 192,96 C256,128 288,128 352,64 C416,-9.69096284e-14 512,-5.68434189e-14 512,-5.68434189e-14 C469.333333,-5.68434189e-14 298.666667,-5.68434189e-14 -2.27373675e-13,-5.68434189e-14 C-7.59392549e-14,21.3333333 -2.22044605e-16,53.3333333 -2.22044605e-16,96 Z" id="Path-3" fill="url(#linearGradient-3)" fill-rule="nonzero" transform="translate(256.000000, 58.509668) scale(-1, 1) translate(-256.000000, -58.509668) "></path>
+    </g>
+</svg>
