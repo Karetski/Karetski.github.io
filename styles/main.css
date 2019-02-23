@@ -15,6 +15,21 @@ a:hover {
     text-decoration: underline;
 }
 
+.buttonLink {
+    font-size: 20px;
+    font-weight: 800;
+    padding: 10px 12px;
+    border-radius: 12px;
+    color: #FFF;
+    background-color: #1A40FF;
+}
+
+.buttonLink:hover {
+    text-decoration: none;
+    cursor: pointer;
+    opacity: 0.7;
+}
+
 h1 {
     font-size: 48px;
     font-weight: 800;
@@ -296,13 +311,7 @@ main {
                     }
 
                 .grid > .item > .content > .promo > a {
-                    font-size: 20px;
-                    font-weight: 800;
-                    padding: 10px 12px;
-                    border-radius: 12px;
                     align-self: center;
-                    color: #FFF;
-                    background-color: #1A40FF;
                 }
             
         .grid > .item > .tags {
