@@ -22,7 +22,8 @@
 	<link rel="icon" href="images/logo.svg" type="image/svg+xml">
 
     <!-- Scripts -->
-    <script src="https://unpkg.com/masonry-layout@4/dist/masonry.pkgd.min.js"></script>
+    <script src="scripts/masonry.pkgd.min.js"></script>
+    <script src="scripts/rellax.min.js"></script>
 </head>
 
 <body>
@@ -67,31 +68,53 @@
     <main>
         <section>
             <div class="wrapper about">
-                <div class="ground">
-                    <div class="description">
-                        <div class="mainHeading">
-                                <h1>Alexey Karetski</h1>
-                                <h3>Software Engineer</h3>
-                            </div>
-                        <p class="secondaryText">
-                            Experienced software engineer creating modern applications using Swift and Objective-C programming languages and corresponding frameworks. Participated in development of applications that are leading in Finance, Entertaiment and Sports industries. Really interested in a new technologies looking to solve old problems.
-                        </p>
+                <div class="ground half">
+                    <div class="primaryHeading">
+                            <h1>Alexey Karetski</h1>
+                            <h3>Software Engineer</h3>
+                    </div>
+                    <p class="secondaryText description">
+                        Experienced software engineer creating modern applications using Swift and Objective-C programming languages and corresponding frameworks. Participated in development of applications that are leading in Finance, Entertaiment and Sports industries. Really interested in a new technologies looking to solve old problems.
+                    </p>
+                </div>
+                <div class="ground half">
+                    <img data-rellax-speed="1.25" class="parallax legacy" src="images/artworks/legacy.svg">
+                    <img data-rellax-speed="1.75" class="parallax discipline" src="images/artworks/discipline.svg">
+                    <img data-rellax-speed="2.25" class="parallax creativity" src="images/artworks/creativity.svg">
+                </div>
+                <div class="ground half">
+                    <div class="secondaryHeading">
+                        <h3>Skills</h3>
                     </div>
                     <ul class="tags">
                         <li>Swift</li>
                         <li>Objective-C</li>
                         <li>UIKit</li>
+                        <li>FRP</li>
+                        <li>Leadership</li>
+                        <li>Collaboration</li>
+                        <!-- <li class="more">
+                            <a href=""></a>
+                        </li> -->
+                    </ul>
+                </div>
+                <div class="ground half">
+                    <div class="secondaryHeading">
+                        <h3>Interests</h3>
+                    </div>
+                    <ul class="tags">
                         <li>UI/UX Design</li>
-                        <li class="more">
-                            <a href="#moreInfo"></a>
-                        </li>
+                        <li>Warcraft</li>
+                        <li>Music</li>
+                        <li>Lord of the Rings</li>
+                        <li>Travelling</li>
                     </ul>
                 </div>
             </div>
         </section>
         <section>
-            <div class="wrapper commercial" id="moreInfo">
-                <div class="ground mainHeading">
+            <div class="wrapper commercial">
+                <div class="ground primaryHeading">
                     <h1>Experience</h1>
                     <h3>Projects always created with passion and attention to detail</h3>
                 </div>
@@ -198,7 +221,7 @@
         </section>
         <section>
             <div class="wrapper personal">
-                <div class="ground mainHeading">
+                <div class="ground primaryHeading">
                     <h1>Personal</h1>
                     <h3>Side projects made to help people solve their problems</h3>
                 </div>
@@ -298,6 +321,9 @@
                 gutter: 128
             });
         }
+    </script>
+    <script type="text/javascript">
+        var rellax = new Rellax('.parallax');
     </script>
 </body>
 
