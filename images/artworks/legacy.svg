@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="176px" height="176px" viewBox="0 0 176 176" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 52.5 (67469) - http://www.bohemiancoding.com/sketch -->
+    <title>Legacy</title>
+    <desc>Created with Sketch.</desc>
+    <defs>
+        <filter x="-48.4%" y="-48.4%" width="196.9%" height="196.9%" filterUnits="objectBoundingBox" id="filter-1">
+            <feOffset dx="0" dy="8" in="SourceAlpha" result="shadowOffsetOuter1"></feOffset>
+            <feGaussianBlur stdDeviation="12" in="shadowOffsetOuter1" result="shadowBlurOuter1"></feGaussianBlur>
+            <feColorMatrix values="0 0 0 0 0   0 0 0 0 0   0 0 0 0 0  0 0 0 0.1 0" type="matrix" in="shadowBlurOuter1" result="shadowMatrixOuter1"></feColorMatrix>
+            <feMerge>
+                <feMergeNode in="shadowMatrixOuter1"></feMergeNode>
+                <feMergeNode in="SourceGraphic"></feMergeNode>
+            </feMerge>
+        </filter>
+        <linearGradient x1="0%" y1="50%" x2="100%" y2="50%" id="linearGradient-2">
+            <stop stop-color="#C6E377" offset="0%"></stop>
+            <stop stop-color="#FBFAD3" offset="100%"></stop>
+        </linearGradient>
+        <path d="M83.3738667,0 C96.224,0 102.648533,0 109.5648,2.18666667 C117.1168,4.93546667 123.064533,10.8832 125.813333,18.4352 C128,25.3514667 128,31.7770667 128,44.6261333 L128,83.3738667 C128,96.224 128,102.647467 125.813333,109.5648 C123.064533,117.1168 117.1168,123.064533 109.5648,125.812267 C102.648533,128 96.224,128 83.3738667,128 L44.6261333,128 C31.776,128 25.3514667,128 18.4352,125.812267 C10.8832,123.064533 4.93546667,117.1168 2.18666667,109.5648 C0,102.647467 0,96.224 0,83.3738667 L0,44.6261333 C0,31.7770667 0,25.3514667 2.18666667,18.4352 C4.93546667,10.8832 10.8832,4.93546667 18.4352,2.18666667 C25.3514667,0 31.776,0 44.6261333,0 L83.3738667,0 Z" id="path-3"></path>
+        <linearGradient x1="0%" y1="50%" x2="100%" y2="50%" id="linearGradient-5">
+            <stop stop-color="#729D39" offset="0%"></stop>
+            <stop stop-color="#C6E377" offset="100%"></stop>
+        </linearGradient>
+        <linearGradient x1="0%" y1="50%" x2="100%" y2="50%" id="linearGradient-6">
+            <stop stop-color="#36622B" offset="0%"></stop>
+            <stop stop-color="#729D39" offset="100%"></stop>
+        </linearGradient>
+    </defs>
+    <g id="Main" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="Desktop" transform="translate(-1064.000000, -806.000000)">
+            <g id="Icons" transform="translate(736.000000, 800.000000)">
+                <g id="Legacy" filter="url(#filter-1)" transform="translate(352.000000, 22.000000)">
+                    <mask id="mask-4" fill="white">
+                        <use xlink:href="#path-3"></use>
+                    </mask>
+                    <use id="Mask" fill="url(#linearGradient-2)" xlink:href="#path-3"></use>
+                    <path d="M83.3738667,-1.42108547e-14 C96.224,-1.42108547e-14 102.648533,-1.42108547e-14 109.5648,2.18666667 C117.1168,4.93546667 123.064533,10.8832 125.813333,18.4352 C128,25.3514667 128,31.7770667 128,44.6261333 L128,80 C122.666667,96 112,104 96,104 C72,104 64,96 40,96 C24,96 10.6666667,104 -2.84217094e-14,120 L-2.84217094e-14,44.6261333 C-2.84217094e-14,31.7770667 -2.84217094e-14,25.3514667 2.18666667,18.4352 C4.93546667,10.8832 10.8832,4.93546667 18.4352,2.18666667 C25.3514667,-1.42108547e-14 31.776,-1.42108547e-14 44.6261333,-1.42108547e-14 L83.3738667,-1.42108547e-14 Z" id="Middle" fill="url(#linearGradient-5)" mask="url(#mask-4)"></path>
+                    <path d="M128,-1.70530257e-13 L128,40 C117.333333,61.3333333 104,72 88,72 C64,72 56,56 32,56 C16,56 5.33333333,48 2.84217094e-14,32 L2.84217094e-14,-1.70530257e-13 L128,-1.70530257e-13 Z" id="Top" fill="url(#linearGradient-6)" mask="url(#mask-4)"></path>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="512px" height="192px" viewBox="0 0 512 192" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 52.5 (67469) - http://www.bohemiancoding.com/sketch -->
+    <title>Snowonder Abstract</title>
+    <desc>Created with Sketch.</desc>
+    <defs>
+        <linearGradient x1="0%" y1="50%" x2="100%" y2="50%" id="linearGradient-1">
+            <stop stop-color="#E1ADDC" offset="0%"></stop>
+            <stop stop-color="#FFF5DB" offset="100%"></stop>
+        </linearGradient>
+        <linearGradient x1="100%" y1="50%" x2="0%" y2="50%" id="linearGradient-2">
+            <stop stop-color="#C238B5" offset="0%"></stop>
+            <stop stop-color="#E1ADDC" offset="100%"></stop>
+        </linearGradient>
+        <linearGradient x1="100%" y1="50%" x2="0%" y2="50%" id="linearGradient-3">
+            <stop stop-color="#C238B5" offset="0%"></stop>
+            <stop stop-color="#810075" offset="100%"></stop>
+        </linearGradient>
+    </defs>
+    <g id="Snowonder-Abstract" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <rect id="Rectangle" fill="url(#linearGradient-1)" x="0" y="0" width="512" height="192"></rect>
+        <path d="M2.5243549e-28,128 C96,160 128,63.9855836 192,95.9855836 C256,127.985584 256,160 320,160 C384,160 416,63.9855836 512,128 C512,83 512,34.6524499 512,-2.84217094e-14 C469.333333,-2.84217094e-14 298.666667,-2.84217094e-14 -2.27373675e-13,-2.84217094e-14 C-7.57912251e-14,42.6666667 2.5243549e-28,85.3333333 2.5243549e-28,128 Z" id="Path-3-Copy" fill="url(#linearGradient-2)" fill-rule="nonzero" transform="translate(256.000000, 80.000000) scale(-1, 1) translate(-256.000000, -80.000000) "></path>
+        <path d="M5.45696821e-12,64 C64,95.9855836 128,32 192,32 C256,32 320,96 384,64 C448,32 448,-8.8817842e-16 512,32 C511.999564,-31.9855836 512,-8.2600593e-14 512,-8.2600593e-14 C469.333333,-8.2600593e-14 298.666667,-7.54951657e-14 -7.27595761e-12,-6.03961325e-14 C1.2126596e-12,3.27737837e-13 5.45696821e-12,21.3333333 5.45696821e-12,64 Z" id="Path-3" fill="url(#linearGradient-3)" fill-rule="nonzero"></path>
+    </g>
+</svg>

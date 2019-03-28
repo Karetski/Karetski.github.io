@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="352px" height="352px" viewBox="0 0 352 352" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 52.5 (67469) - http://www.bohemiancoding.com/sketch -->
+    <title>Creativity</title>
+    <desc>Created with Sketch.</desc>
+    <defs>
+        <filter x="-48.0%" y="-48.0%" width="196.1%" height="196.1%" filterUnits="objectBoundingBox" id="filter-1">
+            <feOffset dx="0" dy="16" in="SourceAlpha" result="shadowOffsetOuter1"></feOffset>
+            <feGaussianBlur stdDeviation="24" in="shadowOffsetOuter1" result="shadowBlurOuter1"></feGaussianBlur>
+            <feColorMatrix values="0 0 0 0 0   0 0 0 0 0   0 0 0 0 0  0 0 0 0.1 0" type="matrix" in="shadowBlurOuter1" result="shadowMatrixOuter1"></feColorMatrix>
+            <feMerge>
+                <feMergeNode in="shadowMatrixOuter1"></feMergeNode>
+                <feMergeNode in="SourceGraphic"></feMergeNode>
+            </feMerge>
+        </filter>
+        <linearGradient x1="0%" y1="50%" x2="100%" y2="50%" id="linearGradient-2">
+            <stop stop-color="#F5A855" offset="0%"></stop>
+            <stop stop-color="#F4E557" offset="100%"></stop>
+        </linearGradient>
+        <path d="M166.747733,0 C192.448,0 205.297067,0 219.1296,4.37333333 C234.2336,9.87093333 246.129067,21.7664 251.626667,36.8704 C256,50.7029333 256,63.5541333 256,89.2522667 L256,166.747733 C256,192.448 256,205.294933 251.626667,219.1296 C246.129067,234.2336 234.2336,246.129067 219.1296,251.624533 C205.297067,256 192.448,256 166.747733,256 L89.2522667,256 C63.552,256 50.7029333,256 36.8704,251.624533 C21.7664,246.129067 9.87093333,234.2336 4.37333333,219.1296 C0,205.294933 0,192.448 0,166.747733 L0,89.2522667 C0,63.5541333 0,50.7029333 4.37333333,36.8704 C9.87093333,21.7664 21.7664,9.87093333 36.8704,4.37333333 C50.7029333,0 63.552,0 89.2522667,0 L166.747733,0 Z" id="path-3"></path>
+        <linearGradient x1="0%" y1="50%" x2="100%" y2="50%" id="linearGradient-5">
+            <stop stop-color="#DC4444" offset="0%"></stop>
+            <stop stop-color="#F5A855" offset="100%"></stop>
+        </linearGradient>
+        <linearGradient x1="0%" y1="50%" x2="100%" y2="50%" id="linearGradient-6">
+            <stop stop-color="#97124B" offset="0%"></stop>
+            <stop stop-color="#DC4444" offset="100%"></stop>
+        </linearGradient>
+    </defs>
+    <g id="Main" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="Desktop" transform="translate(-688.000000, -768.000000)">
+            <g id="Icons" transform="translate(736.000000, 800.000000)">
+                <g id="Creativity" filter="url(#filter-1)">
+                    <mask id="mask-4" fill="white">
+                        <use xlink:href="#path-3"></use>
+                    </mask>
+                    <use id="Mask" fill="url(#linearGradient-2)" xlink:href="#path-3"></use>
+                    <path d="M166.747733,-2.84217094e-14 C192.448,-2.84217094e-14 205.297067,-2.84217094e-14 219.1296,4.37333333 C234.2336,9.87093333 246.129067,21.7664 251.626667,36.8704 C256,50.7029333 256,63.5541333 256,89.2522667 L256,224 C245.333333,192 218.666667,176 176,176 C112,176 112,128 64,128 C32,128 10.6666667,149.091838 -2.84217094e-14,191.275513 L-2.84217094e-14,89.2522667 C-2.84217094e-14,63.5541333 -2.84217094e-14,50.7029333 4.37333333,36.8704 C9.87093333,21.7664 21.7664,9.87093333 36.8704,4.37333333 C50.7029333,-2.84217094e-14 63.552,-2.84217094e-14 89.2522667,-2.84217094e-14 L166.747733,-2.84217094e-14 Z" id="Middle" fill="url(#linearGradient-5)" mask="url(#mask-4)"></path>
+                    <path d="M256,-1.70530257e-13 L256,80 C245.333333,112 224,128 192,128 C144,128 128,64 80,64 C48,64 21.3333333,80 2.55795385e-13,112 L2.84217094e-14,-1.70530257e-13 L256,-1.70530257e-13 Z" id="Top" fill="url(#linearGradient-6)" mask="url(#mask-4)"></path>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>

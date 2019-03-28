@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="512px" height="192px" viewBox="0 0 512 192" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 52.5 (67469) - http://www.bohemiancoding.com/sketch -->
+    <title>Racing Post Abstract</title>
+    <desc>Created with Sketch.</desc>
+    <defs>
+        <linearGradient x1="0%" y1="50%" x2="100%" y2="50%" id="linearGradient-1">
+            <stop stop-color="#EF9B59" offset="0%"></stop>
+            <stop stop-color="#FEE785" offset="100%"></stop>
+        </linearGradient>
+        <linearGradient x1="-1.11022302e-14%" y1="50%" x2="100%" y2="50%" id="linearGradient-2">
+            <stop stop-color="#EF9B59" offset="0%"></stop>
+            <stop stop-color="#C83B3B" offset="100%"></stop>
+        </linearGradient>
+        <linearGradient x1="100%" y1="50%" x2="0%" y2="50%" id="linearGradient-3">
+            <stop stop-color="#C83B3B" offset="0%"></stop>
+            <stop stop-color="#A42127" offset="100%"></stop>
+        </linearGradient>
+    </defs>
+    <g id="Racing-Post-Abstract" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <rect id="Rectangle" fill="url(#linearGradient-1)" x="0" y="0" width="512" height="192"></rect>
+        <path d="M-5.34328137e-12,192 C21.3333333,106.666667 64,64 128,64 C224,64 288,160 384,160 C448,160 490.666667,138.666667 512,96 C512,53.3333333 512,21.3333333 512,-4.12114787e-13 C490.666667,-7.10542736e-14 320,-7.10542736e-14 -5.34328137e-12,-4.12114787e-13 L-5.34328137e-12,192 Z" id="Path-3-Copy" fill="url(#linearGradient-2)" fill-rule="nonzero" transform="translate(256.000000, 96.000000) scale(-1, 1) translate(-256.000000, -96.000000) "></path>
+        <path d="M3.48865847e-26,64 C64,128 160,32 224,32 C288,32 320,96 384,96 C448,96 512,4.97379915e-14 512,4.97379915e-14 C469.333333,4.97379915e-14 298.666667,4.97379915e-14 -3.41060513e-13,4.97379915e-14 C-7.57912251e-14,21.3333333 3.78956126e-14,42.6666667 3.48865847e-26,64 Z" id="Path-3" fill="url(#linearGradient-3)" fill-rule="nonzero"></path>
+    </g>
+</svg>
