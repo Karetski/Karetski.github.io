@@ -5,7 +5,7 @@
     <desc>Created with Sketch.</desc>
     <defs></defs>
     <g id="Main" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
-        <g id="Desktop" transform="translate(-640.000000, -576.000000)" fill="#FFFF1A" fill-rule="nonzero">
+        <g id="Desktop" transform="translate(-640.000000, -576.000000)" fill="#F2F2F2" fill-rule="nonzero">
             <g id="Header">
                 <polygon id="AngleShape" points="710 576 640 703.999548 710 832"></polygon>
             </g>
