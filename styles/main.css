@@ -167,6 +167,14 @@ header {
     align-items: center;
 }
 
+    .hint > a {
+        width: 32px;
+        height: 48px;
+        margin: 0 0 -16px 0;
+        display: block;
+        position: absolute;
+    }
+
     .hint > .arrow {
         width: 16px;
         height: 6px;
