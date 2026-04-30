@@ -121,13 +121,13 @@
   // same CRT pass — a single colour pipeline for the whole field instead of
   // a CSS filter on top, with a deeper push-back so interactive elements pop.
   const PLAY_BG_SAT = 0.05;
-  // Two opacities for the desaturated flipping field. Inside the playable
-  // rectangle should always read as the LIGHTER region — which means
-  // opposite glyph-opacity assignments in the two themes:
-  //   dark mode: inner = visible (brighter glyphs on black).
-  //   light mode: inner = faded (glyphs closer to white).
-  // Outside is the inverse so the contrast is always toward "playfield is
-  // brighter than the rest of the screen".
+  // Two opacities for the desaturated flipping field. The playable rectangle
+  // is always the calmer region — inner glyphs fade toward the theme bg so
+  // bubbles stand out, while the outside keeps the livelier flipping field.
+  // In dark mode that means inner glyphs dim toward black (playfield reads
+  // darker than outside); in light mode inner glyphs fade toward white
+  // (playfield reads lighter than outside). Same rule, opposite visual
+  // direction by theme.
   const PLAY_BG_OPACITY_VISIBLE = 0.55;
   const PLAY_BG_OPACITY_FADED   = 0.1;
   const desaturate = ([r, g, b], factor) => {
@@ -149,12 +149,7 @@
   const getPalette = (inPlay = false) => {
     const base = isLightMode ? config.paletteLight : config.paletteDark;
     if (!isPlayMode) return base;
-    // In dark mode, brighter = more saturated (further from black).
-    // In light mode, brighter = more bg-tinted (closer to white).
-    // So which opacity makes the playfield "lighter" flips by theme.
-    const innerOp = isLightMode ? PLAY_BG_OPACITY_FADED   : PLAY_BG_OPACITY_VISIBLE;
-    const outerOp = isLightMode ? PLAY_BG_OPACITY_VISIBLE : PLAY_BG_OPACITY_FADED;
-    const op = inPlay ? innerOp : outerOp;
+    const op = inPlay ? PLAY_BG_OPACITY_FADED : PLAY_BG_OPACITY_VISIBLE;
     return base.map((c) => dimToBg(desaturate(c, PLAY_BG_SAT), op));
   };
   const getVividPalette = () => (isLightMode ? config.paletteLight : config.paletteDark);
