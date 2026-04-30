@@ -28,9 +28,19 @@
 
   // ----- Tweakable config (live-editable via debug panel) ---------------
   const defaultConfig = {
-    // Background behavior
-    flipMinMs: 800,
-    flipMaxMs: 4800,
+    // Background flip field — each cell rolls per-frame at a base rate gently
+    // modulated by a Perlin field, so activity is uniform at a glance but
+    // breathes spatially without producing wave fronts.
+    flipRate: 0.5,           // average flips/sec/cell (across the field)
+    flipVariation: 0.35,     // 0 = uniform, 1 = strong spatial swing of activity
+    noiseScale: 0.18,        // spatial scale of the flip-rate noise
+    noiseSpeed: 0.6,         // how fast that field flows over time
+    // Color field — every palette color has its own noise field; cells
+    // weighted-randomly pick among them on each flip, so dominant regions
+    // are stippled and boundaries dissolve.
+    colorNoiseScale: 0.06,
+    colorNoiseSpeed: 0.18,
+    colorBias: 0.25,         // raise to make peaks more distinct (less blended)
     brightnessVar: 0,        // 0 = uniform, 1 = cells can go fully dark
 
     // CRT shader
@@ -75,10 +85,6 @@
   const panelRect = { x: 0, y: 0, z: 1, w: 1 }; // panel bounds in vUv space
 
   const getPalette = () => isLightMode ? config.paletteLight : config.paletteDark;
-  const randPaletteColor = () => {
-    const p = getPalette();
-    return p[(Math.random() * p.length) | 0];
-  };
   const applyBrightness = (color) => {
     if (config.brightnessVar <= 0) return color.slice();
     const b = 1 - Math.random() * config.brightnessVar;
@@ -131,7 +137,70 @@
   };
 
   const randChar = () => CHARSET[(Math.random() * CHARSET.length) | 0];
-  const randDelay = () => config.flipMinMs + Math.random() * Math.max(0, config.flipMaxMs - config.flipMinMs);
+
+  // 3D value noise with quintic smoothstep — Perlin-ish, cheap and good enough
+  // for a flowing flip field. Output is in [0, 1].
+  const NOISE_TIME_BASE = 0.0002;
+  const fade = (t) => t * t * t * (t * (t * 6 - 15) + 10);
+  const hash3 = (x, y, z) => {
+    let n = Math.imul(x | 0, 374761393) ^ Math.imul(y | 0, 668265263) ^ Math.imul(z | 0, 1274126177);
+    n = Math.imul(n ^ (n >>> 13), 1274126177);
+    return ((n ^ (n >>> 16)) >>> 0) / 4294967295;
+  };
+  const noise3 = (x, y, z) => {
+    const xi = Math.floor(x), yi = Math.floor(y), zi = Math.floor(z);
+    const u = fade(x - xi), v = fade(y - yi), w = fade(z - zi);
+    const c000 = hash3(xi,     yi,     zi);
+    const c100 = hash3(xi + 1, yi,     zi);
+    const c010 = hash3(xi,     yi + 1, zi);
+    const c110 = hash3(xi + 1, yi + 1, zi);
+    const c001 = hash3(xi,     yi,     zi + 1);
+    const c101 = hash3(xi + 1, yi,     zi + 1);
+    const c011 = hash3(xi,     yi + 1, zi + 1);
+    const c111 = hash3(xi + 1, yi + 1, zi + 1);
+    const x00 = c000 + (c100 - c000) * u;
+    const x10 = c010 + (c110 - c010) * u;
+    const x01 = c001 + (c101 - c001) * u;
+    const x11 = c011 + (c111 - c011) * u;
+    const y0 = x00 + (x10 - x00) * v;
+    const y1 = x01 + (x11 - x01) * v;
+    return y0 + (y1 - y0) * w;
+  };
+  // Per-frame flip probability for one cell. Baseline rate everywhere, with
+  // mild spatial variation so the activity drifts without forming wave fronts.
+  const sampleFlipProb = (c, r, now, dt) => {
+    const n = noise3(
+      c * config.noiseScale,
+      r * config.noiseScale,
+      now * NOISE_TIME_BASE * config.noiseSpeed,
+    );
+    const mod = 1 + (n - 0.5) * 2 * config.flipVariation;
+    return config.flipRate * Math.max(0, mod) * dt * 0.001;
+  };
+  // Each palette color has its own noise field (offset on z). On flip, pick
+  // weighted-randomly across them — dominant fields produce that color most
+  // often but never exclusively, so boundaries dissolve into a stipple.
+  const COLOR_NOISE_Z_STRIDE = 7919;
+  const colorWeights = [];
+  const sampleColorIndex = (c, r, now) => {
+    const palette = getPalette();
+    const x = c * config.colorNoiseScale;
+    const y = r * config.colorNoiseScale;
+    const tBase = now * NOISE_TIME_BASE * config.colorNoiseSpeed;
+    let total = 0;
+    for (let i = 0; i < palette.length; i++) {
+      const w = Math.max(0, noise3(x, y, tBase + COLOR_NOISE_Z_STRIDE * (i + 1)) - config.colorBias);
+      colorWeights[i] = w;
+      total += w;
+    }
+    if (total <= 0) return (Math.random() * palette.length) | 0;
+    let pick = Math.random() * total;
+    for (let i = 0; i < palette.length; i++) {
+      pick -= colorWeights[i];
+      if (pick <= 0) return i;
+    }
+    return palette.length - 1;
+  };
 
   // ----- Canvases -------------------------------------------------------
   const screenCanvas = document.getElementById('screen');
@@ -148,6 +217,7 @@
 
   // ----- Grid setup -----------------------------------------------------
   const setupGrid = () => {
+    document.documentElement.classList.toggle('light', isLightMode);
     dpr = window.devicePixelRatio || 1;
 
     gctx.font = `${FONT_PX}px ${FONT_FAMILY}`;
@@ -176,17 +246,21 @@
     rows = Math.floor(H / cellH);
 
     const now = performance.now();
+    const palette = getPalette();
     cells = new Array(cols * rows);
     for (let i = 0; i < cells.length; i++) {
-      const color = applyBrightness(randPaletteColor());
+      const r = (i / cols) | 0;
+      const c = i - r * cols;
+      const colorIndex = sampleColorIndex(c, r, now);
+      const color = applyBrightness(palette[colorIndex]);
       cells[i] = {
         char: randChar(),
-        nextFlipAt: now + randDelay(),
         locked: false,
         color: color,
         colorStrs: getColorStrs(color),
         heat: 0,
         lastHeatLevel: -1,
+        colorIndex: colorIndex,
       };
     }
 
@@ -377,9 +451,18 @@
         const cell = cells[r * cols + c];
         const prevChar = cell.char;
 
-        if (!cell.locked && now >= cell.nextFlipAt) {
-          cell.char = randChar();
-          cell.nextFlipAt = now + randDelay();
+        if (!cell.locked) {
+          const flipProb = sampleFlipProb(c, r, now, dt);
+          if (Math.random() < flipProb) {
+            cell.char = randChar();
+            const colorIndex = sampleColorIndex(c, r, now);
+            if (colorIndex !== cell.colorIndex) {
+              cell.colorIndex = colorIndex;
+              cell.color = applyBrightness(getPalette()[colorIndex]);
+              cell.colorStrs = getColorStrs(cell.color);
+              cell.lastHeatLevel = -1; // force redraw even if heat unchanged
+            }
+          }
         }
         if (cell.heat > 0) {
           cell.heat *= decay;
@@ -780,6 +863,24 @@
       setupGrid();
     };
     const onCellChange = () => setupGrid();
+    // Color-side sliders only bite at flip time, so make them instantly visible
+    // by resampling every unlocked cell against the current config.
+    const onColorChange = () => {
+      if (!cells.length) return;
+      const t = performance.now();
+      const palette = getPalette();
+      for (let i = 0; i < cells.length; i++) {
+        const cell = cells[i];
+        if (cell.locked) continue;
+        const r = (i / cols) | 0;
+        const c = i - r * cols;
+        const idx = sampleColorIndex(c, r, t);
+        cell.colorIndex = idx;
+        cell.color = applyBrightness(palette[idx]);
+        cell.colorStrs = getColorStrs(cell.color);
+        cell.lastHeatLevel = -1;
+      }
+    };
 
     section('CRT shader');
     slider('chrom. aberration', 'chromaticAberration', 0, 0.02, 0.0005);
@@ -796,9 +897,14 @@
     slider('breathing wave',    'breathe',             0,   0.2, 0.005);
 
     section('Background');
-    slider('flip min (ms)', 'flipMinMs',     100, 5000, 50, () => {});
-    slider('flip max (ms)', 'flipMaxMs',     500, 20000, 100, () => {});
-    slider('brightness var', 'brightnessVar', 0,   1,    0.05, onCellChange);
+    slider('flip rate',      'flipRate',      0,    3,    0.05);
+    slider('flip variation', 'flipVariation', 0,    1,    0.05);
+    slider('noise scale',    'noiseScale',    0.05, 0.5,  0.01);
+    slider('noise speed',    'noiseSpeed',    0,    3,    0.05);
+    slider('color scale',    'colorNoiseScale', 0.02, 0.4, 0.005, onColorChange);
+    slider('color speed',    'colorNoiseSpeed', 0,    2,   0.05,  onColorChange);
+    slider('color bias',     'colorBias',     0,    0.5,  0.01,  onColorChange);
+    slider('brightness var', 'brightnessVar', 0,    1,    0.05,  onCellChange);
 
     section('Colors (current theme)');
     const yPick = colorRow('yellow',
