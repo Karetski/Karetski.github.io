@@ -169,12 +169,19 @@
     const frameW        = Math.max(titleNaturalW, linksNaturalW);
     const interiorW     = frameW - 2;
 
-    // Title block — framed and centered on the middle row
-    const titleFrameH    = 3;
-    const titleRow       = Math.floor(rows / 2);
-    const titleFrameTop  = titleRow - 1;
-    const frameLeft      = Math.floor((cols - frameW) / 2);
-    const titleStartCol  = frameLeft + 1 + Math.floor((interiorW - TITLE.length) / 2);
+    // Total height of the combined frames (Title + Gap + Links)
+    const titleFrameH  = 3;
+    const linkFrameH   = LINKS.length + 2;
+    const totalH       = titleFrameH + FRAME_GAP + linkFrameH;
+
+    // Center the whole group vertically
+    const groupTop     = Math.floor((rows - totalH) / 2);
+    const frameLeft    = Math.floor((cols - frameW) / 2);
+
+    // Title block
+    const titleFrameTop = groupTop;
+    const titleRow      = titleFrameTop + 1;
+    const titleStartCol = frameLeft + 1 + Math.floor((interiorW - TITLE.length) / 2);
 
     drawFrame(titleFrameTop, frameLeft, frameW, titleFrameH, COL_FRAME);
     for (let i = 0; i < TITLE.length; i++) {
@@ -191,7 +198,6 @@
     titleEl.style.top  = (titleRow * cellH) + 'px';
 
     // Links block — framed below the title, each link centered on its own row
-    const linkFrameH   = LINKS.length + 2;
     const linkFrameTop = titleFrameTop + titleFrameH + FRAME_GAP;
 
     drawFrame(linkFrameTop, frameLeft, frameW, linkFrameH, COL_FRAME);
