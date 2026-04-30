@@ -11,7 +11,6 @@
   const TITLE = 'Alexey Karetski';
   const RIPPLE_RADIUS = 180;
   const TRAIL_TAU = 700;
-  const MIN_TEAR_OPACITY = 0.08;
   const COL_TITLE = [255, 255, 255];
   const COL_FRAME = [255, 255, 255];
   const FONT_FAMILY = "'Sometype Mono', monospace";
@@ -36,7 +35,7 @@
     // Background flip field — each cell rolls per-frame at a base rate gently
     // modulated by a Perlin field, so activity is uniform at a glance but
     // breathes spatially without producing wave fronts.
-    flipRate: 0.5,           // average flips/sec/cell (across the field)
+    flipRate: 0.2,           // average flips/sec/cell (across the field)
     flipVariation: 0.35,     // 0 = uniform, 1 = strong spatial swing of activity
     noiseScale: 0.18,        // spatial scale of the flip-rate noise
     noiseSpeed: 0.6,         // how fast that field flows over time
@@ -121,24 +120,13 @@
     };
   };
 
-  // Pre-cached `rgb(...)` strings for each color quantized to 10 tear levels.
-  const getColorStrs = (color) => {
-    const theme = getThemeColors();
-    const key = (color[0] << 16) | (color[1] << 8) | color[2] | (isLightMode ? 1 << 24 : 0);
-    let arr = colorStrCache.get(key);
-    if (arr) return arr;
-    arr = new Array(10);
-    for (let h = 0; h < 10; h++) {
-      const tear = h / 9;
-      const alpha = 1 - tear * (1 - MIN_TEAR_OPACITY);
-      const bgBlend = 1 - alpha;
-      const cr = (color[0] * alpha + theme.bgRGB[0] * bgBlend) | 0;
-      const cg = (color[1] * alpha + theme.bgRGB[1] * bgBlend) | 0;
-      const cb = (color[2] * alpha + theme.bgRGB[2] * bgBlend) | 0;
-      arr[h] = `rgb(${cr},${cg},${cb})`;
-    }
-    colorStrCache.set(key, arr);
-    return arr;
+  const getColorStr = (color) => {
+    const key = (color[0] << 16) | (color[1] << 8) | color[2];
+    let s = colorStrCache.get(key);
+    if (s) return s;
+    s = `rgb(${color[0] | 0},${color[1] | 0},${color[2] | 0})`;
+    colorStrCache.set(key, s);
+    return s;
   };
 
   const randChar = (colorIndex) => {
@@ -265,9 +253,9 @@
         char: randChar(colorIndex),
         locked: false,
         color: color,
-        colorStrs: getColorStrs(color),
+        colorStr: getColorStr(color),
         heat: 0,
-        lastHeatLevel: -1,
+        dirty: true,
         colorIndex: colorIndex,
       };
     }
@@ -277,7 +265,7 @@
       const cell = cells[r * cols + c];
       cell.locked = true;
       cell.color = color;
-      cell.colorStrs = getColorStrs(color);
+      cell.colorStr = getColorStr(color);
       cell.char = ch;
       cell.isFrameBorder = FRAME_BORDER_CHARS.indexOf(ch) >= 0;
     };
@@ -406,7 +394,9 @@
     gl.viewport(0, 0, screenCanvas.width, screenCanvas.height);
   };
 
-  // ----- Ripple ---------------------------------------------------------
+  // ----- Disturbance trail ---------------------------------------------
+  // Pointer drag heats nearby cells; heat decays into a fading trail and
+  // boosts the per-cell flip rate so chars/colors churn in the wake.
   const applyRippleAt = (px, py) => {
     const minR = Math.max(0, Math.floor((py - RIPPLE_RADIUS) / cellH));
     const maxR = Math.min(rows - 1, Math.ceil((py + RIPPLE_RADIUS) / cellH));
@@ -426,7 +416,10 @@
         if (d2 < r2) {
           const cell = cells[r * cols + c];
           if (cell.locked) continue;
-          const t = 1 - Math.sqrt(d2) / RIPPLE_RADIUS;
+          // Quadratic falloff: cells near the pointer stay near full
+          // intensity while outer cells drop off sharply.
+          const linear = 1 - Math.sqrt(d2) / RIPPLE_RADIUS;
+          const t = linear * linear;
           if (t > cell.heat) cell.heat = t;
         }
       }
@@ -453,6 +446,7 @@
       pointer.lastY = pointer.y;
     }
 
+    const palette = getPalette();
     for (let r = 0; r < rows; r++) {
       const cy = r * cellH;
       for (let c = 0; c < cols; c++) {
@@ -460,14 +454,19 @@
         const prevChar = cell.char;
 
         if (!cell.locked) {
-          const flipProb = sampleFlipProb(c, r, now, dt);
+          const baseFlipProb = sampleFlipProb(c, r, now, dt);
+          // Heat boosts the flip rate so disturbed cells churn faster.
+          const flipProb = Math.min(1, baseFlipProb + cell.heat);
           if (Math.random() < flipProb) {
-            const colorIndex = sampleColorIndex(c, r, now);
+            // Strong heat occasionally yanks the color slot off the noise
+            // field so the trail visibly shuffles palette, not just chars.
+            const colorIndex = cell.heat > 0 && Math.random() < cell.heat * 0.6
+              ? (Math.random() * palette.length) | 0
+              : sampleColorIndex(c, r, now);
             if (colorIndex !== cell.colorIndex) {
               cell.colorIndex = colorIndex;
-              cell.color = applyBrightness(getPalette()[colorIndex]);
-              cell.colorStrs = getColorStrs(cell.color);
-              cell.lastHeatLevel = -1; // force redraw even if heat unchanged
+              cell.color = applyBrightness(palette[colorIndex]);
+              cell.colorStr = getColorStr(cell.color);
             }
             cell.char = randChar(colorIndex);
           }
@@ -476,12 +475,9 @@
           cell.heat *= decay;
           if (cell.heat < 0.02) cell.heat = 0;
         }
-        if (!cell.locked && cell.heat > 0.05 && Math.random() < cell.heat * cell.heat) {
-          cell.char = randChar(cell.colorIndex);
-        }
 
-        const heatLevel = cell.heat > 0 ? Math.min(9, (cell.heat * 10) | 0) : 0;
-        if (cell.char === prevChar && heatLevel === cell.lastHeatLevel) continue;
+        if (cell.char === prevChar && !cell.dirty) continue;
+        cell.dirty = false;
 
         const cx = c * cellW;
         gctx.save();
@@ -490,7 +486,7 @@
         gctx.clip();
         gctx.fillStyle = getThemeColors().bg;
         gctx.fillRect(cx, cy, cellW, cellH);
-        gctx.fillStyle = cell.colorStrs[heatLevel];
+        gctx.fillStyle = cell.colorStr;
         if (cell.isFrameBorder) {
           gctx.save();
           gctx.translate(cx, cy);
@@ -501,7 +497,6 @@
           gctx.fillText(cell.char, cx, cy + cellH / 2 - 1);
         }
         gctx.restore();
-        cell.lastHeatLevel = heatLevel;
       }
     }
   };
@@ -709,7 +704,7 @@
     requestAnimationFrame(loop);
   };
 
-  // ----- Pointer ripple -------------------------------------------------
+  // ----- Pointer trail --------------------------------------------------
   const isInDebugPanel = (e) => e.target && e.target.closest && e.target.closest('#debug-panel');
   const onPointerDown = (e) => {
     if (isInDebugPanel(e)) return;
@@ -885,9 +880,9 @@
         const idx = sampleColorIndex(c, r, t);
         cell.colorIndex = idx;
         cell.color = applyBrightness(palette[idx]);
-        cell.colorStrs = getColorStrs(cell.color);
+        cell.colorStr = getColorStr(cell.color);
         cell.char = randChar(idx);
-        cell.lastHeatLevel = -1;
+        cell.dirty = true;
       }
     };
 
