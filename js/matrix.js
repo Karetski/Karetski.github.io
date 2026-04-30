@@ -1,43 +1,43 @@
 (() => {
   // ----- Config ---------------------------------------------------------
-  const FONT_PX        = 18;
-  const LINE_HEIGHT    = 1.22; // cellH = 22: ~4 px breathing room below em-box for descenders ([ { y g)
-  const CHARSET        = '!#$%&*+,./:;<=>?@[]^_{|}~0123456789';
-  const TITLE          = 'Alexey Karetski';
-  const FLIP_MIN_MS    = 800;
-  const FLIP_MAX_MS    = 4800;
-  const RIPPLE_RADIUS  = 180; // px around pointer where flipping accelerates
-  const TRAIL_TAU      = 700; // ms — heat half-life ≈ 0.69 × TAU (controls trail length)
-  const HEAT_GLOW      = 0.6; // mix toward white at peak heat (0..1)
-  const COL_TITLE      = [255, 255, 255]; // white
-  const COL_LINK       = [100, 180, 255]; // Firefox-style blue — interactive
-  const COL_FRAME      = [255, 255, 255]; // white frame borders
-  const FONT_FAMILY    = "'JetBrains Mono', monospace";
+  const FONT_PX = 18;
+  const LINE_HEIGHT    = 1.15; // cellH = 21: ~3 px breathing room below em-box for descenders ([ { y g)
+  const CHARSET = '!#$%&*+,./:;<=>?@[]^_{|}~0123456789';
+  const TITLE = 'Alexey Karetski';
+  const FLIP_MIN_MS = 800;
+  const FLIP_MAX_MS = 4800;
+  const RIPPLE_RADIUS = 180; // px around pointer where flipping accelerates
+  const TRAIL_TAU = 700; // ms — heat half-life ≈ 0.69 × TAU (controls trail length)
+  const HEAT_GLOW = 0.8; // mix toward white at peak heat (0..1)
+  const COL_TITLE = [255, 255, 255]; // white
+  const COL_LINK = [100, 180, 255]; // Firefox-style blue — interactive
+  const COL_FRAME = [255, 255, 255]; // white frame borders
+  const FONT_FAMILY = "'JetBrains Mono', monospace";
 
   const LINKS = [
     { label: 'linkedin', href: 'https://www.linkedin.com/in/karetski' },
-    { label: 'github',   href: 'https://github.com/karetski' },
-    { label: 'x',        href: 'https://x.com/karetski23' },
+    { label: 'github', href: 'https://github.com/karetski' },
+    { label: 'x', href: 'https://x.com/karetski23' },
   ];
   const FRAME_PAD = 1; // min chars of horizontal padding inside each frame
   const FRAME_GAP = 1; // blank rows between the title frame and the links frame
   const FRAME_CHARS = {
     tl: '╔', tr: '╗', bl: '╚', br: '╝',
-    h:  '═', v:  '║',
+    h: '═', v: '║',
   };
   const FRAME_BORDER_CHARS =
     FRAME_CHARS.tl + FRAME_CHARS.tr + FRAME_CHARS.bl +
-    FRAME_CHARS.br + FRAME_CHARS.h  + FRAME_CHARS.v;
+    FRAME_CHARS.br + FRAME_CHARS.h + FRAME_CHARS.v;
 
   // Yellow → orange spread, sampled per cell at init for textured background
   const PALETTE = [
-    [255, 215,   0],   // gold       #FFD700
-    [255, 193,   7],   // amber      #FFC107
-    [255, 165,   0],   // orange     #FFA500
-    [255, 140,   0],   // dark orange#FF8C00
-    [255, 179,  71],   // sandy      #FFB347
+    [255, 215, 0],   // gold       #FFD700
+    [255, 193, 7],   // amber      #FFC107
+    [255, 165, 0],   // orange     #FFA500
+    [255, 140, 0],   // dark orange#FF8C00
+    [255, 179, 71],   // sandy      #FFB347
     [255, 234, 100],   // pale yellow
-    [255, 200,  40],   // saturated yellow
+    [255, 200, 40],   // saturated yellow
   ];
   const randPaletteColor = () => PALETTE[(Math.random() * PALETTE.length) | 0];
 
@@ -83,7 +83,7 @@
   let lastFrameTime = 0;
   const pointer = { active: false, x: 0, y: 0, lastX: 0, lastY: 0 };
 
-  const randChar  = () => CHARSET[(Math.random() * CHARSET.length) | 0];
+  const randChar = () => CHARSET[(Math.random() * CHARSET.length) | 0];
   const randDelay = () => FLIP_MIN_MS + Math.random() * (FLIP_MAX_MS - FLIP_MIN_MS);
 
   // ----- Grid setup -----------------------------------------------------
@@ -101,11 +101,11 @@
 
     // Grid canvas renders at logical resolution; WebGL upscales to full DPR
     // (the slight softening reads as CRT phosphor, not as a fidelity loss)
-    gridCanvas.width    = W;
-    gridCanvas.height   = H;
-    screenCanvas.width  = Math.floor(W * dpr);
+    gridCanvas.width = W;
+    gridCanvas.height = H;
+    screenCanvas.width = Math.floor(W * dpr);
     screenCanvas.height = Math.floor(H * dpr);
-    screenCanvas.style.width  = W + 'px';
+    screenCanvas.style.width = W + 'px';
     screenCanvas.style.height = H + 'px';
 
     gctx.font = `${FONT_PX}px ${FONT_FAMILY}`;
@@ -144,9 +144,9 @@
     const drawFrame = (top, left, w, h, color) => {
       for (let c = 0; c < w; c++) {
         let topCh, botCh;
-        if (c === 0)          { topCh = FRAME_CHARS.tl; botCh = FRAME_CHARS.bl; }
+        if (c === 0) { topCh = FRAME_CHARS.tl; botCh = FRAME_CHARS.bl; }
         else if (c === w - 1) { topCh = FRAME_CHARS.tr; botCh = FRAME_CHARS.br; }
-        else                  { topCh = FRAME_CHARS.h;  botCh = FRAME_CHARS.h;  }
+        else { topCh = FRAME_CHARS.h; botCh = FRAME_CHARS.h; }
         setLocked(top, left + c, topCh, color);
         setLocked(top + h - 1, left + c, botCh, color);
       }
@@ -163,24 +163,24 @@
     };
 
     // Sync both frames to the wider group's natural width
-    const longestLink   = Math.max(...LINKS.map(l => l.label.length));
+    const longestLink = Math.max(...LINKS.map(l => l.label.length));
     const titleNaturalW = TITLE.length + 2 * FRAME_PAD + 2;
     const linksNaturalW = longestLink + 2 * FRAME_PAD + 2;
-    const frameW        = Math.max(titleNaturalW, linksNaturalW);
-    const interiorW     = frameW - 2;
+    const frameW = Math.max(titleNaturalW, linksNaturalW);
+    const interiorW = frameW - 2;
 
     // Total height of the combined frames (Title + Gap + Links)
-    const titleFrameH  = 3;
-    const linkFrameH   = LINKS.length + 2;
-    const totalH       = titleFrameH + FRAME_GAP + linkFrameH;
+    const titleFrameH = 3;
+    const linkFrameH = LINKS.length * 2 + 1;
+    const totalH = titleFrameH + FRAME_GAP + linkFrameH;
 
     // Center the whole group vertically
-    const groupTop     = Math.floor((rows - totalH) / 2);
-    const frameLeft    = Math.floor((cols - frameW) / 2);
+    const groupTop = Math.floor((rows - totalH) / 2);
+    const frameLeft = Math.floor((cols - frameW) / 2);
 
     // Title block
     const titleFrameTop = groupTop;
-    const titleRow      = titleFrameTop + 1;
+    const titleRow = titleFrameTop + 1;
     const titleStartCol = frameLeft + 1 + Math.floor((interiorW - TITLE.length) / 2);
 
     drawFrame(titleFrameTop, frameLeft, frameW, titleFrameH, COL_FRAME);
@@ -195,7 +195,7 @@
     titleEl.style.letterSpacing = (cellW - naturalCellW) + 'px';
     titleEl.style.lineHeight = cellH + 'px';
     titleEl.style.left = (titleStartCol * cellW) + 'px';
-    titleEl.style.top  = (titleRow * cellH) + 'px';
+    titleEl.style.top = (titleRow * cellH) + 'px';
 
     // Links block — framed below the title, each link centered on its own row
     const linkFrameTop = titleFrameTop + titleFrameH + FRAME_GAP;
@@ -206,11 +206,22 @@
     linksEl.innerHTML = '';
     for (let li = 0; li < LINKS.length; li++) {
       const link = LINKS[li];
-      const row = linkFrameTop + 1 + li;
+      const row = linkFrameTop + 1 + li * 2;
       const startCol = frameLeft + 1 + Math.floor((interiorW - link.label.length) / 2);
 
       for (let i = 0; i < link.label.length; i++) {
         setLocked(row, startCol + i, link.label[i], COL_LINK);
+      }
+
+      // Add a light separator between links
+      if (li < LINKS.length - 1) {
+        const sepRow = row + 1;
+        const sepColor = [80, 80, 80];
+        setLocked(sepRow, frameLeft, '╟', COL_FRAME);
+        for (let c = 0; c < interiorW; c++) {
+          setLocked(sepRow, frameLeft + 1 + c, '─', sepColor);
+        }
+        setLocked(sepRow, frameLeft + frameW - 1, '╢', COL_FRAME);
       }
 
       const a = document.createElement('a');
@@ -218,9 +229,9 @@
       a.target = '_blank';
       a.rel = 'noopener noreferrer';
       a.setAttribute('aria-label', link.label);
-      a.style.left   = (startCol * cellW) + 'px';
-      a.style.top    = (row * cellH) + 'px';
-      a.style.width  = (link.label.length * cellW) + 'px';
+      a.style.left = (startCol * cellW) + 'px';
+      a.style.top = (row * cellH) + 'px';
+      a.style.width = (link.label.length * cellW) + 'px';
       a.style.height = cellH + 'px';
       linksEl.appendChild(a);
     }
@@ -424,16 +435,16 @@
   const quad = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, quad);
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
-    -1, -1,  1, -1, -1,  1,
-    -1,  1,  1, -1,  1,  1,
+    -1, -1, 1, -1, -1, 1,
+    -1, 1, 1, -1, 1, 1,
   ]), gl.STATIC_DRAW);
 
   const aPos = gl.getAttribLocation(program, 'aPos');
   gl.enableVertexAttribArray(aPos);
   gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
 
-  const uTex  = gl.getUniformLocation(program, 'uTex');
-  const uRes  = gl.getUniformLocation(program, 'uRes');
+  const uTex = gl.getUniformLocation(program, 'uTex');
+  const uRes = gl.getUniformLocation(program, 'uRes');
   const uTime = gl.getUniformLocation(program, 'uTime');
 
   const tex = gl.createTexture();
