@@ -376,11 +376,11 @@
 
         if (li < LINKS.length - 1) {
           const sepRow = linkRow + 1;
-          setLocked(sepRow, stackLeft, '┣', theme.frame);
+          setLocked(sepRow, stackLeft, '╠', theme.frame);
           for (let c = 0; c < stackInteriorW; c++) {
-            setLocked(sepRow, stackLeft + 1 + c, '━', theme.sep);
+            setLocked(sepRow, stackLeft + 1 + c, '═', theme.sep);
           }
-          setLocked(sepRow, stackLeft + stackW - 1, '┫', theme.frame);
+          setLocked(sepRow, stackLeft + stackW - 1, '╣', theme.frame);
         }
 
         const a = document.createElement('a');
