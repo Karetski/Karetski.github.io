@@ -27,10 +27,10 @@
   const FRAME_PAD = 1;
   const FRAME_GAP = 1;
   const FRAME_CHARS = {
-    tl: '┏', tr: '┓', bl: '┗', br: '┛',
-    h: '━', v: '┃',
+    tl: '╔', tr: '╗', bl: '╚', br: '╝',
+    h: '═', v: '║',
   };
-  const FRAME_BORDER_CHARS = '┏┓┗┛┃━┣┫';
+  const FRAME_BORDER_CHARS = '╔╗╚╝║═╠╣';
 
   // ----- Tweakable config (live-editable via debug panel) ---------------
   const defaultConfig = {
@@ -407,11 +407,11 @@
     }
 
     const buttonSepRow = navRow + 1;
-    setLocked(buttonSepRow, stackLeft, '┣', theme.frame);
+    setLocked(buttonSepRow, stackLeft, '╠', theme.frame);
     for (let c = 0; c < stackInteriorW; c++) {
-      setLocked(buttonSepRow, stackLeft + 1 + c, '━', theme.sep);
+      setLocked(buttonSepRow, stackLeft + 1 + c, '═', theme.sep);
     }
-    setLocked(buttonSepRow, stackLeft + stackW - 1, '┫', theme.frame);
+    setLocked(buttonSepRow, stackLeft + stackW - 1, '╣', theme.frame);
 
     const toggleRow = buttonSepRow + 1;
     const toggleStartCol = stackLeft + 1 + Math.floor((stackInteriorW - toggleLabel.length) / 2);
