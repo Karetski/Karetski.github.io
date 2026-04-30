@@ -2,7 +2,12 @@
   // ----- Static config (not exposed to debug panel) ---------------------
   const FONT_PX = 18;
   const LINE_HEIGHT    = 1.0; // tight look
-  const CHARSET = '!#$%&*+,./:;<=>?@[]^_{|}~0123456789';
+  // One char set per palette slot — order must match paletteDark/paletteLight.
+  const CHARSETS = [
+    '0123456789ABCDEF*+/=^~',  // yellow: hex digits + sharp operators
+    '<>[]{}()|\\KMNVWXYZ',     // purple: brackets + angular uppercase
+    '!?@#$&%.,:;_-',           // pink: punctuation
+  ];
   const TITLE = 'Alexey Karetski';
   const RIPPLE_RADIUS = 180;
   const TRAIL_TAU = 700;
@@ -136,7 +141,10 @@
     return arr;
   };
 
-  const randChar = () => CHARSET[(Math.random() * CHARSET.length) | 0];
+  const randChar = (colorIndex) => {
+    const set = CHARSETS[colorIndex] || CHARSETS[0];
+    return set[(Math.random() * set.length) | 0];
+  };
 
   // 3D value noise with quintic smoothstep — Perlin-ish, cheap and good enough
   // for a flowing flip field. Output is in [0, 1].
@@ -254,7 +262,7 @@
       const colorIndex = sampleColorIndex(c, r, now);
       const color = applyBrightness(palette[colorIndex]);
       cells[i] = {
-        char: randChar(),
+        char: randChar(colorIndex),
         locked: false,
         color: color,
         colorStrs: getColorStrs(color),
@@ -454,7 +462,6 @@
         if (!cell.locked) {
           const flipProb = sampleFlipProb(c, r, now, dt);
           if (Math.random() < flipProb) {
-            cell.char = randChar();
             const colorIndex = sampleColorIndex(c, r, now);
             if (colorIndex !== cell.colorIndex) {
               cell.colorIndex = colorIndex;
@@ -462,6 +469,7 @@
               cell.colorStrs = getColorStrs(cell.color);
               cell.lastHeatLevel = -1; // force redraw even if heat unchanged
             }
+            cell.char = randChar(colorIndex);
           }
         }
         if (cell.heat > 0) {
@@ -469,7 +477,7 @@
           if (cell.heat < 0.02) cell.heat = 0;
         }
         if (!cell.locked && cell.heat > 0.05 && Math.random() < cell.heat * cell.heat) {
-          cell.char = randChar();
+          cell.char = randChar(cell.colorIndex);
         }
 
         const heatLevel = cell.heat > 0 ? Math.min(9, (cell.heat * 10) | 0) : 0;
@@ -878,6 +886,7 @@
         cell.colorIndex = idx;
         cell.color = applyBrightness(palette[idx]);
         cell.colorStrs = getColorStrs(cell.color);
+        cell.char = randChar(idx);
         cell.lastHeatLevel = -1;
       }
     };
