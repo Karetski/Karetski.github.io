@@ -89,3 +89,21 @@ html.light #title::-moz-selection {
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
 }
+
+#nav {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+}
+
+#nav a {
+  position: absolute;
+  display: block;
+  box-sizing: content-box;
+  padding: 8px 12px;
+  margin: -8px -12px;
+  pointer-events: auto;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}

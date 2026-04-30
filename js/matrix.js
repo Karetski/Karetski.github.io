@@ -22,6 +22,8 @@
   ];
   const TOGGLE_DARK_LABEL = 'switch to dark';
   const TOGGLE_LIGHT_LABEL = 'switch to light';
+  const NAV_PLAY_LABEL = 'play the game';
+  const NAV_BACK_LABEL = 'back';
   const FRAME_PAD = 1;
   const FRAME_GAP = 1;
   const FRAME_CHARS = {
@@ -79,6 +81,7 @@
 
   // ----- State ----------------------------------------------------------
   let isLightMode = true;
+  const isPlayMode = document.body.dataset.page === 'play';
   let dpr = 1;
   let cellW = 0, cellH = 0, cols = 0, rows = 0;
   let cells = [];
@@ -290,106 +293,155 @@
     };
 
     const toggleLabel = isLightMode ? TOGGLE_DARK_LABEL : TOGGLE_LIGHT_LABEL;
+    const navLabel = isPlayMode ? NAV_BACK_LABEL : NAV_PLAY_LABEL;
+    const navHref = isPlayMode ? 'index.html' : 'play.html';
+
     const longestLink = Math.max(...LINKS.map(l => l.label.length));
+    // Stable button width covers every label so the layout doesn't reflow
+    // when the toggle flips between "dark" and "light".
+    const longestButtonLabel = Math.max(
+      TOGGLE_DARK_LABEL.length, TOGGLE_LIGHT_LABEL.length,
+      NAV_PLAY_LABEL.length, NAV_BACK_LABEL.length,
+    );
     const titleNaturalW = TITLE.length + 2 * FRAME_PAD + 2;
     const linksNaturalW = longestLink + 2 * FRAME_PAD + 2;
-    const toggleNaturalW = toggleLabel.length + 2 * FRAME_PAD + 2;
-    const frameW = Math.max(titleNaturalW, linksNaturalW, toggleNaturalW);
-    const interiorW = frameW - 2;
+    const buttonNaturalW = longestButtonLabel + 2 * FRAME_PAD + 2;
+    const stackW = Math.max(titleNaturalW, linksNaturalW, buttonNaturalW);
+    const stackInteriorW = stackW - 2;
 
     const titleFrameH = 3;
     const linkFrameH = LINKS.length * 2 + 1;
-    const toggleFrameH = 3;
-    const totalH = titleFrameH + FRAME_GAP + linkFrameH + FRAME_GAP + toggleFrameH;
+    // Bottom frame stacks two rows (nav + toggle) like the links frame:
+    // top border + nav row + separator + toggle row + bottom border.
+    const buttonFrameH = 5;
 
-    const groupTop = Math.floor((rows - totalH) / 2);
-    const frameLeft = Math.floor((cols - frameW) / 2);
+    const stackLeft = Math.floor((cols - stackW) / 2);
+
+    let totalH, groupTop;
+    if (isPlayMode) {
+      totalH = buttonFrameH;
+      groupTop = rows - buttonFrameH - 1;
+    } else {
+      totalH = titleFrameH + FRAME_GAP + linkFrameH + FRAME_GAP + buttonFrameH;
+      groupTop = Math.floor((rows - totalH) / 2);
+    }
 
     // Panel bounds in vUv space (vUv.y is flipped: y=1 is top of canvas)
-    panelRect.x = (frameLeft * cellW) / W;
-    panelRect.z = ((frameLeft + frameW) * cellW) / W;
+    panelRect.x = (stackLeft * cellW) / W;
+    panelRect.z = ((stackLeft + stackW) * cellW) / W;
     panelRect.y = 1 - ((groupTop + totalH) * cellH) / H;
     panelRect.w = 1 - (groupTop * cellH) / H;
 
-    const titleFrameTop = groupTop;
-    const titleRow = titleFrameTop + 1;
-    const titleStartCol = frameLeft + 1 + Math.floor((interiorW - TITLE.length) / 2);
-
-    drawFrame(titleFrameTop, frameLeft, frameW, titleFrameH, theme.frame);
-    for (let i = 0; i < TITLE.length; i++) {
-      setLocked(titleRow, titleStartCol + i, TITLE[i], theme.title);
-    }
-
     const titleEl = document.getElementById('title');
-    titleEl.textContent = TITLE;
-    titleEl.style.font = `${FONT_PX}px ${FONT_FAMILY}`;
-    titleEl.style.letterSpacing = (cellW - naturalCellW) + 'px';
-    titleEl.style.lineHeight = cellH + 'px';
-    titleEl.style.left = (titleStartCol * cellW) + 'px';
-    titleEl.style.top = (titleRow * cellH) + 'px';
-
-    const linkFrameTop = titleFrameTop + titleFrameH + FRAME_GAP;
-
-    drawFrame(linkFrameTop, frameLeft, frameW, linkFrameH, theme.frame);
-
     const linksEl = document.getElementById('links');
+    const navEl = document.getElementById('nav');
+    const toggleEl = document.getElementById('theme-toggle');
+
+    titleEl.textContent = '';
     linksEl.innerHTML = '';
-    for (let li = 0; li < LINKS.length; li++) {
-      const link = LINKS[li];
-      const row = linkFrameTop + 1 + li * 2;
-      const startCol = frameLeft + 1 + Math.floor((interiorW - link.label.length) / 2);
+    navEl.innerHTML = '';
+    toggleEl.innerHTML = '';
 
-      for (let i = 0; i < link.label.length; i++) {
-        setLocked(row, startCol + i, link.label[i], theme.link);
+    let buttonFrameTop;
+    if (isPlayMode) {
+      buttonFrameTop = groupTop;
+    } else {
+      const titleFrameTop = groupTop;
+      const titleRow = titleFrameTop + 1;
+      const titleStartCol = stackLeft + 1 + Math.floor((stackInteriorW - TITLE.length) / 2);
+
+      drawFrame(titleFrameTop, stackLeft, stackW, titleFrameH, theme.frame);
+      for (let i = 0; i < TITLE.length; i++) {
+        setLocked(titleRow, titleStartCol + i, TITLE[i], theme.title);
       }
 
-      if (li < LINKS.length - 1) {
-        const sepRow = row + 1;
-        setLocked(sepRow, frameLeft, '┣', theme.frame);
-        for (let c = 0; c < interiorW; c++) {
-          setLocked(sepRow, frameLeft + 1 + c, '━', theme.sep);
+      titleEl.textContent = TITLE;
+      titleEl.style.font = `${FONT_PX}px ${FONT_FAMILY}`;
+      titleEl.style.letterSpacing = (cellW - naturalCellW) + 'px';
+      titleEl.style.lineHeight = cellH + 'px';
+      titleEl.style.left = (titleStartCol * cellW) + 'px';
+      titleEl.style.top = (titleRow * cellH) + 'px';
+
+      const linkFrameTop = titleFrameTop + titleFrameH + FRAME_GAP;
+      drawFrame(linkFrameTop, stackLeft, stackW, linkFrameH, theme.frame);
+
+      for (let li = 0; li < LINKS.length; li++) {
+        const link = LINKS[li];
+        const linkRow = linkFrameTop + 1 + li * 2;
+        const startCol = stackLeft + 1 + Math.floor((stackInteriorW - link.label.length) / 2);
+
+        for (let i = 0; i < link.label.length; i++) {
+          setLocked(linkRow, startCol + i, link.label[i], theme.link);
         }
-        setLocked(sepRow, frameLeft + frameW - 1, '┫', theme.frame);
+
+        if (li < LINKS.length - 1) {
+          const sepRow = linkRow + 1;
+          setLocked(sepRow, stackLeft, '┣', theme.frame);
+          for (let c = 0; c < stackInteriorW; c++) {
+            setLocked(sepRow, stackLeft + 1 + c, '━', theme.sep);
+          }
+          setLocked(sepRow, stackLeft + stackW - 1, '┫', theme.frame);
+        }
+
+        const a = document.createElement('a');
+        a.href = link.href;
+        a.target = '_blank';
+        a.rel = 'noopener noreferrer';
+        a.setAttribute('aria-label', link.label);
+        a.style.left = (startCol * cellW) + 'px';
+        a.style.top = (linkRow * cellH) + 'px';
+        a.style.width = (link.label.length * cellW) + 'px';
+        a.style.height = cellH + 'px';
+        linksEl.appendChild(a);
       }
 
-      const a = document.createElement('a');
-      a.href = link.href;
-      a.target = '_blank';
-      a.rel = 'noopener noreferrer';
-      a.setAttribute('aria-label', link.label);
-      a.style.left = (startCol * cellW) + 'px';
-      a.style.top = (row * cellH) + 'px';
-      a.style.width = (link.label.length * cellW) + 'px';
-      a.style.height = cellH + 'px';
-      linksEl.appendChild(a);
+      buttonFrameTop = linkFrameTop + linkFrameH + FRAME_GAP;
     }
 
-    const toggleFrameTop = linkFrameTop + linkFrameH + FRAME_GAP;
-    const toggleRow = toggleFrameTop + 1;
-    const toggleStartCol = frameLeft + 1 + Math.floor((interiorW - toggleLabel.length) / 2);
+    drawFrame(buttonFrameTop, stackLeft, stackW, buttonFrameH, theme.frame);
 
-    drawFrame(toggleFrameTop, frameLeft, frameW, toggleFrameH, theme.frame);
+    const navRow = buttonFrameTop + 1;
+    const navStartCol = stackLeft + 1 + Math.floor((stackInteriorW - navLabel.length) / 2);
+    for (let i = 0; i < navLabel.length; i++) {
+      setLocked(navRow, navStartCol + i, navLabel[i], theme.link);
+    }
+
+    const buttonSepRow = navRow + 1;
+    setLocked(buttonSepRow, stackLeft, '┣', theme.frame);
+    for (let c = 0; c < stackInteriorW; c++) {
+      setLocked(buttonSepRow, stackLeft + 1 + c, '━', theme.sep);
+    }
+    setLocked(buttonSepRow, stackLeft + stackW - 1, '┫', theme.frame);
+
+    const toggleRow = buttonSepRow + 1;
+    const toggleStartCol = stackLeft + 1 + Math.floor((stackInteriorW - toggleLabel.length) / 2);
     for (let i = 0; i < toggleLabel.length; i++) {
       setLocked(toggleRow, toggleStartCol + i, toggleLabel[i], theme.link);
     }
 
-    const toggleEl = document.getElementById('theme-toggle');
-    toggleEl.innerHTML = '';
+    const navA = document.createElement('a');
+    navA.href = navHref;
+    navA.setAttribute('aria-label', navLabel);
+    navA.style.left = (navStartCol * cellW) + 'px';
+    navA.style.top = (navRow * cellH) + 'px';
+    navA.style.width = (navLabel.length * cellW) + 'px';
+    navA.style.height = cellH + 'px';
+    navEl.appendChild(navA);
 
-    const btn = document.createElement('button');
-    btn.textContent = toggleLabel;
-    btn.setAttribute('aria-label', toggleLabel);
-    btn.style.left = (toggleStartCol * cellW) + 'px';
-    btn.style.top = (toggleRow * cellH) + 'px';
-    btn.style.width = (toggleLabel.length * cellW) + 'px';
-    btn.style.height = cellH + 'px';
-    btn.onclick = () => {
+    const toggleBtn = document.createElement('button');
+    toggleBtn.textContent = toggleLabel;
+    toggleBtn.setAttribute('aria-label', toggleLabel);
+    toggleBtn.style.left = (toggleStartCol * cellW) + 'px';
+    toggleBtn.style.top = (toggleRow * cellH) + 'px';
+    toggleBtn.style.width = (toggleLabel.length * cellW) + 'px';
+    toggleBtn.style.height = cellH + 'px';
+    toggleBtn.onclick = () => {
       isLightMode = !isLightMode;
       colorStrCache = new Map();
       setupGrid();
       refreshPickers();
     };
-    toggleEl.appendChild(btn);
+    toggleEl.appendChild(toggleBtn);
 
     gl.viewport(0, 0, screenCanvas.width, screenCanvas.height);
   };
