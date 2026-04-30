@@ -4,16 +4,16 @@
   const LINE_HEIGHT    = 1.0; // tight look
   // One char set per palette slot — order must match paletteDark/paletteLight.
   const CHARSETS = [
-    '0123456789ABCDEF*+/=^~',  // yellow: hex digits + sharp operators
-    '<>[]{}()|\\KMNVWXYZ',     // purple: brackets + angular uppercase
-    '!?@#$&%.,:;_-',           // pink: punctuation
+    '1234567890@#$%&?=+*/',  // yellow
+    'ｹｻｽｾﾀﾁﾃﾄﾅﾆﾇﾈﾊﾋﾌﾍﾎﾏﾐﾑ',     // purple
+    'abcДEFghkLmЙoЬQrStUвWXyZ',           // pink
   ];
   const TITLE = 'Alexey Karetski';
   const RIPPLE_RADIUS = 180;
   const TRAIL_TAU = 700;
   const COL_TITLE = [255, 255, 255];
   const COL_FRAME = [255, 255, 255];
-  const FONT_FAMILY = "'Sometype Mono', monospace";
+  const FONT_FAMILY = "'JetBrains Mono', 'Noto Sans JP', monospace";
 
   const LINKS = [
     { label: 'linkedin', href: 'https://www.linkedin.com/in/karetski' },
@@ -27,10 +27,10 @@
   const FRAME_PAD = 1;
   const FRAME_GAP = 1;
   const FRAME_CHARS = {
-    tl: '╔', tr: '╗', bl: '╚', br: '╝',
-    h: '═', v: '║',
+    tl: '\u2554', tr: '\u2557', bl: '\u255A', br: '\u255D',
+    h: '\u2550', v: '\u2551',
   };
-  const FRAME_BORDER_CHARS = '╔╗╚╝║═╠╣';
+  const FRAME_BORDER_CHARS = '\u2554\u2557\u255A\u255D\u2551\u2550\u255F\u2562\u2500';
 
   // ----- Tweakable config (live-editable via debug panel) ---------------
   const defaultConfig = {
@@ -78,6 +78,13 @@
     linkLight: [0, 0, 255],
   };
   const config = JSON.parse(JSON.stringify(defaultConfig));
+  if (document.body.dataset.page === 'play') {
+    // Calm the field down so the game reads as the foreground action.
+    config.flipRate = 0.05;
+    config.noiseSpeed = 0.2;
+    config.colorNoiseSpeed = 0.06;
+    config.flipVariation = 0.2;
+  }
 
   // ----- State ----------------------------------------------------------
   let isLightMode = true;
@@ -86,12 +93,62 @@
   let cellW = 0, cellH = 0, cols = 0, rows = 0;
   let cells = [];
   let colorStrCache = new Map();
+  // Position of the bottom buttons frame in cell coordinates — published to
+  // window.matrixGame so the play-mode HUD can align itself with the panel
+  // sitting just below it.
+  let bottomPanelLeft = 0, bottomPanelWidth = 0, bottomPanelTop = 0;
+  // Optional rectangle (in cell coords) the play-mode game registers so the
+  // matrix paints a slightly different cell bg inside the playable area —
+  // gives the bubble field a visible "lit" region without breaking the CRT
+  // pipeline.
+  let playfieldBounds = null;
   const startTime = performance.now();
   let lastFrameTime = 0;
   const pointer = { active: false, x: 0, y: 0, lastX: 0, lastY: 0 };
   const panelRect = { x: 0, y: 0, z: 1, w: 1 }; // panel bounds in vUv space
 
-  const getPalette = () => isLightMode ? config.paletteLight : config.paletteDark;
+  // In play mode the flipping background is desaturated AND dimmed toward
+  // the theme background so the game's locked cells stay vivid through the
+  // same CRT pass — a single colour pipeline for the whole field instead of
+  // a CSS filter on top, with a deeper push-back so interactive elements pop.
+  const PLAY_BG_SAT = 0.05;
+  // Two opacities for the desaturated flipping field. Inside the playable
+  // rectangle should always read as the LIGHTER region — which means
+  // opposite glyph-opacity assignments in the two themes:
+  //   dark mode: inner = visible (brighter glyphs on black).
+  //   light mode: inner = faded (glyphs closer to white).
+  // Outside is the inverse so the contrast is always toward "playfield is
+  // brighter than the rest of the screen".
+  const PLAY_BG_OPACITY_VISIBLE = 0.55;
+  const PLAY_BG_OPACITY_FADED   = 0.1;
+  const desaturate = ([r, g, b], factor) => {
+    const gray = 0.299 * r + 0.587 * g + 0.114 * b;
+    return [
+      gray + (r - gray) * factor,
+      gray + (g - gray) * factor,
+      gray + (b - gray) * factor,
+    ];
+  };
+  const dimToBg = (rgb, opacity) => {
+    const bg = isLightMode ? 255 : 0;
+    return [
+      Math.round(bg + (rgb[0] - bg) * opacity),
+      Math.round(bg + (rgb[1] - bg) * opacity),
+      Math.round(bg + (rgb[2] - bg) * opacity),
+    ];
+  };
+  const getPalette = (inPlay = false) => {
+    const base = isLightMode ? config.paletteLight : config.paletteDark;
+    if (!isPlayMode) return base;
+    // In dark mode, brighter = more saturated (further from black).
+    // In light mode, brighter = more bg-tinted (closer to white).
+    // So which opacity makes the playfield "lighter" flips by theme.
+    const innerOp = isLightMode ? PLAY_BG_OPACITY_FADED   : PLAY_BG_OPACITY_VISIBLE;
+    const outerOp = isLightMode ? PLAY_BG_OPACITY_VISIBLE : PLAY_BG_OPACITY_FADED;
+    const op = inPlay ? innerOp : outerOp;
+    return base.map((c) => dimToBg(desaturate(c, PLAY_BG_SAT), op));
+  };
+  const getVividPalette = () => (isLightMode ? config.paletteLight : config.paletteDark);
   const applyBrightness = (color) => {
     if (config.brightnessVar <= 0) return color.slice();
     const b = 1 - Math.random() * config.brightnessVar;
@@ -201,6 +258,107 @@
     return palette.length - 1;
   };
 
+  // ----- Cell mutation (used by frame/link layout and by the game) ------
+  const setLocked = (r, c, ch, color) => {
+    if (r < 0 || r >= rows || c < 0 || c >= cols) return;
+    const cell = cells[r * cols + c];
+    const newColStr = getColorStr(color);
+    // Idempotent: stable game cells (a placed bubble re-asserted each frame)
+    // skip the redraw path entirely.
+    if (cell.locked && cell.char === ch && cell.colorStr === newColStr) return;
+    cell.locked = true;
+    cell.color = color;
+    cell.colorStr = newColStr;
+    cell.char = ch;
+    // Only scale characters that have vertical components and need to connect vertically.
+    // Purely horizontal lines (═, ─) and separators with horizontal focus (╟, ╢)
+    // are often better rendered without scaling to preserve their double-line look.
+    cell.isFrameBorder = '\u2554\u2557\u255A\u255D\u2551\u2550\u255F\u2562'.indexOf(ch) >= 0;
+    cell.dirty = true;
+  };
+  // Returns a previously-locked cell to the flipping background, picking a
+  // fresh char/colour from the current noise field so the gap blends in.
+  // Picks the palette based on whether the cell sits inside the play rect —
+  // otherwise an unlocked aim-line cell would briefly flash at the wrong
+  // opacity, leaving a visible trail behind the cursor.
+  const setUnlocked = (r, c) => {
+    if (r < 0 || r >= rows || c < 0 || c >= cols) return;
+    const cell = cells[r * cols + c];
+    if (!cell.locked) return;
+    const pb = playfieldBounds;
+    const inPlay = pb && r >= pb.row && r < pb.row + pb.height && c >= pb.col && c < pb.col + pb.width;
+    const palette = getPalette(inPlay);
+    const colorIndex = sampleColorIndex(c, r, performance.now());
+    const color = applyBrightness(palette[colorIndex]);
+    cell.locked = false;
+    cell.isFrameBorder = false;
+    cell.colorIndex = colorIndex;
+    cell.color = color;
+    cell.colorStr = getColorStr(color);
+    cell.char = randChar(colorIndex);
+    cell.heat = 0;
+    cell.dirty = true;
+  };
+
+  // ----- Game integration -----------------------------------------------
+  // matrix.js doesn't know what the game is — it just exposes hooks the
+  // game can use to write characters into its cell grid and to be told
+  // when the grid is rebuilt (resize, theme toggle).
+  const gameListeners = { regrid: [] };
+  const emit = (evt) => {
+    const list = gameListeners[evt];
+    if (!list) return;
+    for (let i = 0; i < list.length; i++) {
+      try { list[i](); } catch (e) { console.error(e); }
+    }
+  };
+  window.matrixGame = {
+    isPlayMode,
+    get cols() { return cols; },
+    get rows() { return rows; },
+    get cellW() { return cellW; },
+    get cellH() { return cellH; },
+    get isLight() { return isLightMode; },
+    numColors: 3,
+    vividColor: (i) => getVividPalette()[i].slice(),
+    linkColor: () => (isLightMode ? config.linkLight : config.linkDark).slice(),
+    titleColor: () => (isLightMode ? [0, 0, 0] : COL_TITLE.slice()),
+    charFor: (i) => randChar(i),
+    setCell: (col, row, char, color) => setLocked(row, col, char, color),
+    clearCell: (col, row) => setUnlocked(row, col),
+    isLocked: (col, row) => {
+      if (row < 0 || row >= rows || col < 0 || col >= cols) return false;
+      return !!cells[row * cols + col].locked;
+    },
+    get panelLeft() { return bottomPanelLeft; },
+    get panelWidth() { return bottomPanelWidth; },
+    get panelTop() { return bottomPanelTop; },
+    setPlayfieldBounds: (b) => {
+      playfieldBounds = b;
+      if (!cells.length) return;
+      // Re-color every unlocked cell with the palette that matches its new
+      // inside/outside-the-playfield status — without this, cells that
+      // haven't flipped yet would keep stale opacity.
+      const innerP = getPalette(true);
+      const outerP = getPalette(false);
+      for (let i = 0; i < cells.length; i++) {
+        const cell = cells[i];
+        if (cell.locked) { cell.dirty = true; continue; }
+        const r = (i / cols) | 0;
+        const c = i - r * cols;
+        const inPlay = b && r >= b.row && r < b.row + b.height && c >= b.col && c < b.col + b.width;
+        const palette = inPlay ? innerP : outerP;
+        cell.color = applyBrightness(palette[cell.colorIndex]);
+        cell.colorStr = getColorStr(cell.color);
+        cell.dirty = true;
+      }
+    },
+    on: (evt, fn) => {
+      if (!gameListeners[evt]) gameListeners[evt] = [];
+      gameListeners[evt].push(fn);
+    },
+  };
+
   // ----- Canvases -------------------------------------------------------
   const screenCanvas = document.getElementById('screen');
   const gl = screenCanvas.getContext('webgl', { antialias: false, alpha: false, premultipliedAlpha: false });
@@ -263,15 +421,6 @@
       };
     }
 
-    const setLocked = (r, c, ch, color) => {
-      if (r < 0 || r >= rows || c < 0 || c >= cols) return;
-      const cell = cells[r * cols + c];
-      cell.locked = true;
-      cell.color = color;
-      cell.colorStr = getColorStr(color);
-      cell.char = ch;
-      cell.isFrameBorder = FRAME_BORDER_CHARS.indexOf(ch) >= 0;
-    };
     const drawFrame = (top, left, w, h, color) => {
       for (let c = 0; c < w; c++) {
         let topCh, botCh;
@@ -399,6 +548,9 @@
     }
 
     drawFrame(buttonFrameTop, stackLeft, stackW, buttonFrameH, theme.frame);
+    bottomPanelLeft = stackLeft;
+    bottomPanelWidth = stackW;
+    bottomPanelTop = buttonFrameTop;
 
     const navRow = buttonFrameTop + 1;
     const navStartCol = stackLeft + 1 + Math.floor((stackInteriorW - navLabel.length) / 2);
@@ -407,11 +559,11 @@
     }
 
     const buttonSepRow = navRow + 1;
-    setLocked(buttonSepRow, stackLeft, '╠', theme.frame);
+    setLocked(buttonSepRow, stackLeft, '╟', theme.frame);
     for (let c = 0; c < stackInteriorW; c++) {
-      setLocked(buttonSepRow, stackLeft + 1 + c, '═', theme.sep);
+      setLocked(buttonSepRow, stackLeft + 1 + c, '─', theme.sep);
     }
-    setLocked(buttonSepRow, stackLeft + stackW - 1, '╣', theme.frame);
+    setLocked(buttonSepRow, stackLeft + stackW - 1, '╢', theme.frame);
 
     const toggleRow = buttonSepRow + 1;
     const toggleStartCol = stackLeft + 1 + Math.floor((stackInteriorW - toggleLabel.length) / 2);
@@ -444,6 +596,7 @@
     toggleEl.appendChild(toggleBtn);
 
     gl.viewport(0, 0, screenCanvas.width, screenCanvas.height);
+    emit('regrid');
   };
 
   // ----- Disturbance trail ---------------------------------------------
@@ -498,12 +651,18 @@
       pointer.lastY = pointer.y;
     }
 
-    const palette = getPalette();
+    const outerPalette = getPalette(false);
+    const innerPalette = isPlayMode ? getPalette(true) : outerPalette;
+    const theme = getThemeColors();
+    const pb = playfieldBounds;
     for (let r = 0; r < rows; r++) {
       const cy = r * cellH;
+      const inPlayRow = pb && r >= pb.row && r < pb.row + pb.height;
       for (let c = 0; c < cols; c++) {
         const cell = cells[r * cols + c];
         const prevChar = cell.char;
+        const inPlay = inPlayRow && c >= pb.col && c < pb.col + pb.width;
+        const palette = inPlay ? innerPalette : outerPalette;
 
         if (!cell.locked) {
           const baseFlipProb = sampleFlipProb(c, r, now, dt);
@@ -536,17 +695,17 @@
         gctx.beginPath();
         gctx.rect(cx, cy, cellW, cellH);
         gctx.clip();
-        gctx.fillStyle = getThemeColors().bg;
+        gctx.fillStyle = theme.bg;
         gctx.fillRect(cx, cy, cellW, cellH);
         gctx.fillStyle = cell.colorStr;
         if (cell.isFrameBorder) {
           gctx.save();
           gctx.translate(cx, cy);
           gctx.scale(1, cellH / FONT_PX);
-          gctx.fillText(cell.char, 0, FONT_PX / 2 - 1);
+          gctx.fillText(cell.char, 0, FONT_PX / 2);
           gctx.restore();
         } else {
-          gctx.fillText(cell.char, cx, cy + cellH / 2 - 1);
+          gctx.fillText(cell.char, cx, cy + cellH / 2);
         }
         gctx.restore();
       }
@@ -923,12 +1082,16 @@
     const onColorChange = () => {
       if (!cells.length) return;
       const t = performance.now();
-      const palette = getPalette();
+      const innerP = getPalette(true);
+      const outerP = getPalette(false);
+      const pb = playfieldBounds;
       for (let i = 0; i < cells.length; i++) {
         const cell = cells[i];
         if (cell.locked) continue;
         const r = (i / cols) | 0;
         const c = i - r * cols;
+        const inPlay = pb && r >= pb.row && r < pb.row + pb.height && c >= pb.col && c < pb.col + pb.width;
+        const palette = inPlay ? innerP : outerP;
         const idx = sampleColorIndex(c, r, t);
         cell.colorIndex = idx;
         cell.color = applyBrightness(palette[idx]);
@@ -1028,9 +1191,8 @@
   };
 
   if (document.fonts && document.fonts.load) {
-    document.fonts.load(`${FONT_PX}px 'Sometype Mono'`).then(boot, boot);
+    document.fonts.load(`${FONT_PX}px 'JetBrains Mono'`).then(boot, boot);
   } else {
     boot();
   }
 })();
-);
