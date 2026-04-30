@@ -10,7 +10,7 @@
   const TRAIL_TAU = 700; // ms — heat half-life ≈ 0.69 × TAU (controls trail length)
   const HEAT_GLOW = 0.8; // mix toward white at peak heat (0..1)
   const COL_TITLE = [255, 255, 255]; // white
-  const COL_LINK = [100, 180, 255]; // Firefox-style blue — interactive
+  const COL_LINK = [60, 150, 255]; // Brighter electric blue
   const COL_FRAME = [255, 255, 255]; // white frame borders
   const FONT_FAMILY = "'Sometype Mono', monospace";
 
@@ -29,13 +29,13 @@
 
   // Yellow → orange spread, sampled per cell at init for textured background
   const PALETTE = [
-    [255, 215, 0],   // gold       #FFD700
-    [255, 193, 7],   // amber      #FFC107
-    [255, 165, 0],   // orange     #FFA500
-    [255, 140, 0],   // dark orange#FF8C00
-    [255, 179, 71],   // sandy      #FFB347
-    [255, 234, 100],   // pale yellow
-    [255, 200, 40],   // saturated yellow
+    [255, 225, 50],   // bright gold
+    [255, 185, 40],   // bright amber
+    [255, 145, 30],   // bright pumpkin
+    [255, 110, 20],   // bright deep orange
+    [255, 205, 70],   // bright honey
+    [255, 165, 50],   // bright vivid amber
+    [255, 245, 60],   // brilliant saturated yellow
   ];
   const randPaletteColor = () => PALETTE[(Math.random() * PALETTE.length) | 0];
 
