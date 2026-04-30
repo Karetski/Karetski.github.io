@@ -22,12 +22,10 @@
   const FRAME_PAD = 1; // min chars of horizontal padding inside each frame
   const FRAME_GAP = 1; // blank rows between the title frame and the links frame
   const FRAME_CHARS = {
-    tl: '╔', tr: '╗', bl: '╚', br: '╝',
-    h: '═', v: '║',
+    tl: '┏', tr: '┓', bl: '┗', br: '┛',
+    h: '━', v: '┃',
   };
-  const FRAME_BORDER_CHARS =
-    FRAME_CHARS.tl + FRAME_CHARS.tr + FRAME_CHARS.bl +
-    FRAME_CHARS.br + FRAME_CHARS.h + FRAME_CHARS.v;
+  const FRAME_BORDER_CHARS = '┏┓┗┛┃━┣┫';
 
   // Yellow → orange spread, sampled per cell at init for textured background
   const PALETTE = [
@@ -217,11 +215,11 @@
       if (li < LINKS.length - 1) {
         const sepRow = row + 1;
         const sepColor = [80, 80, 80];
-        setLocked(sepRow, frameLeft, '╟', COL_FRAME);
+        setLocked(sepRow, frameLeft, '┣', COL_FRAME);
         for (let c = 0; c < interiorW; c++) {
-          setLocked(sepRow, frameLeft + 1 + c, '─', sepColor);
+          setLocked(sepRow, frameLeft + 1 + c, '━', sepColor);
         }
-        setLocked(sepRow, frameLeft + frameW - 1, '╢', COL_FRAME);
+        setLocked(sepRow, frameLeft + frameW - 1, '┫', COL_FRAME);
       }
 
       const a = document.createElement('a');
@@ -329,11 +327,12 @@
         gctx.fillStyle = cell.colorStrs[heatLevel];
         if (cell.isFrameBorder) {
           // Stretch box-drawing chars vertically to fill the (taller) cell so
-          // the frame still tiles seamlessly. Other chars stay at FONT_PX
-          // and use the bottom 2 px as breathing room for descenders/brackets.
+          // the frame still tiles seamlessly.
+          gctx.save();
           gctx.translate(cx, cy);
           gctx.scale(1, cellH / FONT_PX);
           gctx.fillText(cell.char, 0, 0);
+          gctx.restore();
         } else {
           gctx.fillText(cell.char, cx, cy);
         }
