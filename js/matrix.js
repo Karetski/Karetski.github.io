@@ -7,8 +7,8 @@
   const FLIP_MIN_MS = 800;
   const FLIP_MAX_MS = 4800;
   const RIPPLE_RADIUS = 180; // px around pointer where flipping accelerates
-  const TRAIL_TAU = 700; // ms — heat half-life ≈ 0.69 × TAU (controls trail length)
-  const HEAT_GLOW = 0.8; // mix toward white at peak heat (0..1)
+  const TRAIL_TAU = 700; // ms; opacity trail half-life is about 0.69 x TAU
+  const MIN_TEAR_OPACITY = 0.08; // glyph opacity at peak cursor proximity
   const COL_TITLE = [255, 255, 255]; // white
   const COL_LINK = [60, 150, 255]; // Brighter electric blue
   const COL_FRAME = [255, 255, 255]; // white frame borders
@@ -74,8 +74,6 @@
         link: [0, 80, 200],
         frame: [0, 0, 0],
         sep: [180, 180, 180],
-        glow: 0.1, // darken at peak heat in light mode
-        glowColor: [0, 0, 0]
       };
     }
     return {
@@ -85,12 +83,12 @@
       link: COL_LINK,
       frame: COL_FRAME,
       sep: [80, 80, 80],
-      glow: HEAT_GLOW,
-      glowColor: [255, 255, 255]
     };
   };
 
-  // Pre-cached `rgb(...)` strings for each color quantized to 10 heat levels
+  // Pre-cached `rgb(...)` strings for each color quantized to 10 tear levels.
+  // Higher tear strength blends glyphs toward the page background, producing
+  // the visual equivalent of lower opacity on this opaque canvas.
   const colorStrCache = new Map();
   const getColorStrs = (color) => {
     const theme = getThemeColors();
@@ -99,12 +97,12 @@
     if (arr) return arr;
     arr = new Array(10);
     for (let h = 0; h < 10; h++) {
-      const heat = h * 0.1;
-      const blend = heat * theme.glow;
-      const inv = 1 - blend;
-      const cr = (color[0] * inv + theme.glowColor[0] * blend) | 0;
-      const cg = (color[1] * inv + theme.glowColor[1] * blend) | 0;
-      const cb = (color[2] * inv + theme.glowColor[2] * blend) | 0;
+      const tear = h / 9;
+      const alpha = 1 - tear * (1 - MIN_TEAR_OPACITY);
+      const bgBlend = 1 - alpha;
+      const cr = (color[0] * alpha + theme.bgRGB[0] * bgBlend) | 0;
+      const cg = (color[1] * alpha + theme.bgRGB[1] * bgBlend) | 0;
+      const cb = (color[2] * alpha + theme.bgRGB[2] * bgBlend) | 0;
       arr[h] = `rgb(${cr},${cg},${cb})`;
     }
     colorStrCache.set(key, arr);
@@ -340,7 +338,7 @@
 
   // ----- Update + draw the grid into the 2D canvas ----------------------
   // Canvas pixels persist between frames — only repaint cells whose visible
-  // state (char or quantized heat level) changed since the last draw.
+  // state (char or quantized tear level) changed since the last draw.
   const updateAndDrawGrid = (now) => {
     const dt = lastFrameTime ? Math.min(now - lastFrameTime, 100) : 16.67;
     lastFrameTime = now;
@@ -381,7 +379,7 @@
           cell.char = randChar();
         }
 
-        // Skip the redraw if neither char nor heat-level changed
+        // Skip the redraw if neither char nor tear level changed
         const heatLevel = cell.heat > 0 ? Math.min(9, (cell.heat * 10) | 0) : 0;
         if (cell.char === prevChar && heatLevel === cell.lastHeatLevel) continue;
 
@@ -441,7 +439,7 @@
 
       // Vibrant chromatic aberration — radial RGB separation, all 3 channels offset
       vec2 dir = uv - 0.5;
-      float ab = 0.0065;
+      float ab = 0.0085;
       vec3 col;
       col.r = texture2D(uTex, uv + dir * ab        ).r;
       col.g = texture2D(uTex, uv + dir * ab * 0.30 ).g;
@@ -449,22 +447,22 @@
 
       // Saturation boost — pushes the yellow/orange palette and amplifies the CA fringes
       float lum = dot(col, vec3(0.299, 0.587, 0.114));
-      col = mix(vec3(lum), col, 1.25);
+      col = mix(vec3(lum), col, 1.35);
 
       // Scanlines (soft, bright/dark stripes following the screen Y)
-      float scan = sin(uv.y * uRes.y * 1.6) * 0.5 + 0.5;
-      col *= mix(0.72, 1.0, scan);
+      float scan = sin(uv.y * uRes.y * 1.75) * 0.5 + 0.5;
+      col *= mix(0.62, 1.05, scan);
 
       // Phosphor mask — RGB triad on every 3 device pixels of the X axis
       float px = mod(gl_FragCoord.x, 3.0);
       vec3 mask;
       if (uLight > 0.5) {
         // Subtle mask for light mode
-        mask = vec3(0.98, 0.98, 1.02);
+        mask = vec3(0.95, 0.98, 1.05);
       } else {
-        if      (px < 1.0) mask = vec3(1.15, 0.80, 0.80);
-        else if (px < 2.0) mask = vec3(0.80, 1.15, 0.80);
-        else               mask = vec3(0.80, 0.80, 1.15);
+        if      (px < 1.0) mask = vec3(1.25, 0.72, 0.72);
+        else if (px < 2.0) mask = vec3(0.72, 1.25, 0.72);
+        else               mask = vec3(0.72, 0.72, 1.25);
       }
       col *= mask;
 
@@ -475,7 +473,7 @@
 
       // Phosphor flicker (per-pixel, frame-rate driven)
       float n = hash(floor(gl_FragCoord.xy) + floor(uTime * 60.0));
-      col += (n - 0.5) * 0.025;
+      col += (n - 0.5) * 0.04;
 
       // Mild gamma curve — keeps the bright phosphor punchy
       col = pow(max(col, 0.0), vec3(uLight > 0.5 ? 1.05 : 0.95));
