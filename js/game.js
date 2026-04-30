@@ -10,14 +10,17 @@
   // Bubbles sit on a strict 1-cell-per-slot square grid: every column and
   // every row is a bubble position with no gaps in between. Width tracks the
   // bottom buttons frame so the playfield and the HUD line up exactly.
-  const INITIAL_ROWS       = 5;
-  const REFILL_ROWS        = 4;
-  const SHOTS_PER_DESCENT  = 8;
-  const AIM_LIMIT          = (75 * Math.PI) / 180;
-  const AIM_DOTS           = 16;
-  const NUM_COLORS         = 3;
-  const POP_DURATION_MS    = 520;
-  const NEW_ROW_FILL       = 0.85;
+  const INITIAL_ROWS              = 5;
+  const REFILL_ROWS               = 4;
+  const INITIAL_SHOTS_PER_DESCENT = 8;
+  const MIN_SHOTS_PER_DESCENT     = 3;
+  const AIM_LIMIT                 = (75 * Math.PI) / 180;
+  const AIM_DOTS                  = 16;
+  const NUM_COLORS                = 3;
+  const POP_DURATION_MS           = 520;
+  const POINT_BURST_DURATION_MS   = 1200;
+  const COMBO_BURST_DURATION_MS   = 1500;
+  const NEW_ROW_FILL              = 0.85;
 
   const NEIGHBORS = [[-1, 0], [1, 0], [0, -1], [0, 1]];
 
@@ -35,11 +38,13 @@
   const shooter = { angle: -Math.PI / 2, current: null, next: null };
   let projectile = null;
   let shotsSinceDescent = 0;
+  let shotsPerDescent = INITIAL_SHOTS_PER_DESCENT;
   let score = 0;
   let gameOver = false;
   let pointerX = 0, pointerY = 0;
   let lastWritten = new Set();
   let popping = [];
+  let pointBursts = [];
 
   // ---- slot ↔ matrix cell layout ---------------------------------------
   const slotToCell = (i, j) => ({
@@ -103,13 +108,16 @@
     shooter.next = makeBubble();
     projectile = null;
     shotsSinceDescent = 0;
+    shotsPerDescent = INITIAL_SHOTS_PER_DESCENT;
     score = 0;
     gameOver = false;
     popping = [];
+    pointBursts = [];
   };
 
   const descend = () => {
     grid.unshift(randomRow(NEW_ROW_FILL));
+    if (shotsPerDescent > MIN_SHOTS_PER_DESCENT) shotsPerDescent--;
     dropFloaters();
   };
 
@@ -121,13 +129,16 @@
     grid = [];
     for (let j = 0; j < REFILL_ROWS; j++) grid.push(randomRow(1));
     shotsSinceDescent = 0;
+    shotsPerDescent = INITIAL_SHOTS_PER_DESCENT;
     return true;
   };
 
   // ---- pops ------------------------------------------------------------
+  // popCell only animates + clears the slot. Scoring is awarded per wave by
+  // the caller so we can show "+N" bursts and combo bonuses cohesively.
   const popCell = (i, j, kind) => {
     const cell = grid[j][i];
-    if (!cell) return;
+    if (!cell) return null;
     const c = slotToCell(i, j);
     popping.push({
       col: c.col,
@@ -138,7 +149,25 @@
       tStart: performance.now(),
     });
     grid[j][i] = null;
-    score++;
+    return c;
+  };
+
+  const popGroup = (cells, kind) => {
+    let sumCol = 0, sumRow = 0, n = 0;
+    for (let k = 0; k < cells.length; k++) {
+      const p = popCell(cells[k][0], cells[k][1], kind);
+      if (p) { sumCol += p.col; sumRow += p.row; n++; }
+    }
+    if (!n) return null;
+    return { col: Math.round(sumCol / n), row: Math.round(sumRow / n) };
+  };
+
+  const addPointBurst = (col, row, text, color, kind) => {
+    pointBursts.push({
+      col, row, text, color,
+      kind: kind || 'score',
+      tStart: performance.now(),
+    });
   };
 
   // ---- layout ----------------------------------------------------------
@@ -152,7 +181,9 @@
     // edge, same right edge, no in-between gaps because slots are 1 cell.
     slotCols     = panelWidth;
     startSlotCol = panelLeft;
-    startSlotRow = 1;
+    // Reserve 2 rows above the bubble area: row 1 for popups, row 2 for the
+    // separator line that fences the popup strip off from the playfield.
+    startSlotRow = 3;
 
     const centreCol  = panelLeft + Math.floor(panelWidth / 2);
     const hudTop     = panelTop - 4;
@@ -224,6 +255,15 @@
       }
       popping.length = w;
     }
+    if (pointBursts.length) {
+      const now = performance.now();
+      let w = 0;
+      for (let r = 0; r < pointBursts.length; r++) {
+        const dur = pointBursts[r].kind === 'combo' ? COMBO_BURST_DURATION_MS : POINT_BURST_DURATION_MS;
+        if (now - pointBursts[r].tStart < dur) pointBursts[w++] = pointBursts[r];
+      }
+      pointBursts.length = w;
+    }
     if (gameOver || !projectile) return;
     projectile.x += projectile.vx * dt;
     projectile.y += projectile.vy * dt;
@@ -261,47 +301,129 @@
     if (best) {
       ensureRow(best.j);
       grid[best.j][best.i] = { colorIdx: projectile.colorIdx, char: projectile.char };
-      resolveMatch(best.i, best.j);
+
+      // Wave 1 — direct match (linear run or cluster).
+      const matchCells = collectMatch(best.i, best.j);
+      let waves = 0;
+      let totalPopped = 0;
+      // All bursts render in the dedicated popup strip above the bubble
+      // area so they never cover bubbles. A combo shot collapses the per-
+      // wave popups into a single banner showing the total earned, so the
+      // points value is never displayed twice.
+      const popupRow = 1;
+      let lastBurstCol = null, lastBurstColor = null;
+      let totalEarned = 0;
+      if (matchCells.length) {
+        const matchPts = matchCells.length + Math.max(0, matchCells.length - 3) * 2;
+        const c = popGroup(matchCells, 'match');
+        totalEarned += matchPts;
+        totalPopped += matchCells.length;
+        if (c) { lastBurstCol = c.col; lastBurstColor = M.titleColor(); }
+        waves++;
+
+        // Wave 2 — floaters knocked loose by the match.
+        const floatCells = collectFloaters();
+        if (floatCells.length) {
+          const floatPts = floatCells.length * 3;
+          const fc = popGroup(floatCells, 'float');
+          totalEarned += floatPts;
+          totalPopped += floatCells.length;
+          if (fc) { lastBurstCol = fc.col; lastBurstColor = M.linkColor(); }
+          waves++;
+        }
+      }
+
+      if (waves >= 2) {
+        // Combo: flat bonus on top of the wave totals, but only ONE popup
+        // and ONE score addition for the whole shot.
+        totalEarned += totalPopped * 2;
+        score += totalEarned;
+        const bannerCol = startSlotCol + Math.floor(slotCols / 2);
+        addPointBurst(bannerCol, popupRow, '✦ COMBO +' + totalEarned + ' ✦', M.titleColor(), 'combo');
+      } else if (waves === 1) {
+        score += totalEarned;
+        if (lastBurstCol !== null) {
+          addPointBurst(lastBurstCol, popupRow, '+' + totalEarned, lastBurstColor);
+        }
+      }
     }
     projectile = null;
     shotsSinceDescent++;
     const refilled = refillIfEmpty();
-    if (!refilled && shotsSinceDescent >= SHOTS_PER_DESCENT) {
+    if (!refilled && shotsSinceDescent >= shotsPerDescent) {
       shotsSinceDescent = 0;
       descend();
     }
   };
 
-  const resolveMatch = (i, j) => {
+  // Returns [[i, j], ...] of cells that should pop (linear-run + cluster
+  // rules), without mutating the grid.
+  const collectMatch = (i, j) => {
     const cell = grid[j][i];
-    if (!cell) return;
-    const target = cell.colorIdx;
+    if (!cell) return [];
+    const targetColor = cell.colorIdx;
+    const targetChar  = cell.char;
+    const toPop = new Set();
+
+    // Linear runs through the placed bubble: any straight line of 2+ bubbles
+    // sharing the *exact same symbol* pops (horizontal in the row, vertical
+    // in the column). Symbols are stricter than colors, so this fires for
+    // matching glyphs even when the cluster rule wouldn't trigger.
+    const addRun = (di, dj) => {
+      const run = [[i, j]];
+      let ci = i + di, cj = j + dj;
+      while (cj >= 0 && cj < grid.length && ci >= 0 && ci < slotCols
+             && grid[cj][ci] && grid[cj][ci].char === targetChar) {
+        run.push([ci, cj]);
+        ci += di; cj += dj;
+      }
+      ci = i - di; cj = j - dj;
+      while (cj >= 0 && cj < grid.length && ci >= 0 && ci < slotCols
+             && grid[cj][ci] && grid[cj][ci].char === targetChar) {
+        run.push([ci, cj]);
+        ci -= di; cj -= dj;
+      }
+      if (run.length >= 2) for (let k = 0; k < run.length; k++) toPop.add(run[k][0] + ',' + run[k][1]);
+    };
+    addRun(1, 0);
+    addRun(0, 1);
+
+    // Connected cluster of 3+ same-color bubbles in any shape (classic
+    // Puzzle Bobble rule — color-based, so different glyphs of the same hue
+    // count toward the cluster).
     const seen = new Set([i + ',' + j]);
     const stack = [[i, j]];
     const cluster = [];
     while (stack.length) {
       const [ci, cj] = stack.pop();
       const cur = grid[cj][ci];
-      if (!cur || cur.colorIdx !== target) continue;
+      if (!cur || cur.colorIdx !== targetColor) continue;
       cluster.push([ci, cj]);
       const ns = neighborsOf(ci, cj);
       for (let k = 0; k < ns.length; k++) {
         const ni = ns[k][0], nj = ns[k][1];
         const key = ni + ',' + nj;
         const target2 = grid[nj][ni];
-        if (!seen.has(key) && target2 && target2.colorIdx === target) {
+        if (!seen.has(key) && target2 && target2.colorIdx === targetColor) {
           seen.add(key);
           stack.push([ni, nj]);
         }
       }
     }
-    if (cluster.length < 3) return;
-    for (let k = 0; k < cluster.length; k++) popCell(cluster[k][0], cluster[k][1], 'match');
-    dropFloaters();
+    if (cluster.length >= 3) for (let k = 0; k < cluster.length; k++) toPop.add(cluster[k][0] + ',' + cluster[k][1]);
+
+    if (!toPop.size) return [];
+    const out = [];
+    for (const key of toPop) {
+      const [a, b] = key.split(',');
+      out.push([+a, +b]);
+    }
+    return out;
   };
 
-  const dropFloaters = () => {
-    if (!grid.length || !grid[0]) return;
+  // Returns [[i, j], ...] of bubbles disconnected from the ceiling row.
+  const collectFloaters = () => {
+    if (!grid.length || !grid[0]) return [];
     const reachable = new Set();
     const stack = [];
     for (let i = 0; i < slotCols; i++) {
@@ -319,11 +441,25 @@
         }
       }
     }
+    const out = [];
     for (let j = 0; j < grid.length; j++) {
       for (let i = 0; i < slotCols; i++) {
-        if (grid[j][i] && !reachable.has(i + ',' + j)) popCell(i, j, 'float');
+        if (grid[j][i] && !reachable.has(i + ',' + j)) out.push([i, j]);
       }
     }
+    return out;
+  };
+
+  // Standalone floater drop used by descend(): pops, scores and emits a
+  // burst, but doesn't participate in combo accounting (descents aren't
+  // shot-driven).
+  const dropFloaters = () => {
+    const cells = collectFloaters();
+    if (!cells.length) return;
+    const pts = cells.length * 3;
+    const c = popGroup(cells, 'float');
+    score += pts;
+    if (c) addPointBurst(c.col, 1, '+' + pts, M.linkColor());
   };
 
   const checkLose = () => {
@@ -375,6 +511,39 @@
 
     const frameColor = M.titleColor();
     const link       = M.linkColor();
+
+    // Popup strip: a fully-enclosed bordered box that mirrors the bottom HUD
+    // — same width, same double-line style — so the playfield is bracketed
+    // by matching frames at the top and bottom.
+    {
+      const popTop    = 0;
+      const popInner  = 1;
+      const popBot    = startSlotRow - 1;  // == 2
+      const popLeft   = panelLeft;
+      const popRight  = panelLeft + panelWidth - 1;
+      // Top + bottom borders (corners at outer ends, ═ in between).
+      for (let x = 0; x < panelWidth; x++) {
+        const col = popLeft + x;
+        let topCh = '═', botCh = '═';
+        if (x === 0)                 { topCh = '╔'; botCh = '╚'; }
+        else if (x === panelWidth-1) { topCh = '╗'; botCh = '╝'; }
+        put(col, popTop, topCh, frameColor);
+        put(col, popBot, botCh, frameColor);
+        frameKeys.add(col + ',' + popTop);
+        frameKeys.add(col + ',' + popBot);
+      }
+      // Inner row: blank-fill so flipping bg can't bleed through, then the
+      // side verticals on the outer columns. Popup text sits in the middle
+      // and skips frameKeys so the box is never broken.
+      for (let x = 0; x < panelWidth; x++) {
+        const col = popLeft + x;
+        put(col, popInner, ' ', frameColor);
+      }
+      put(popLeft,  popInner, '║', frameColor);
+      put(popRight, popInner, '║', frameColor);
+      frameKeys.add(popLeft  + ',' + popInner);
+      frameKeys.add(popRight + ',' + popInner);
+    }
 
     // HUD: a single bordered strip the same width as the bottom buttons
     // panel, split into queue / current / score by shared T-junction
@@ -480,6 +649,66 @@
           const k = pc.col + ',' + drawRow;
           if (!writes.has(k) && !bubbleKeys.has(k)) put(pc.col, drawRow, pc.char, color);
         }
+      }
+    }
+
+    // Point bursts — score "+N" drifts up + fades out. Combo banners are
+    // intentionally louder: held in place, flashing between title + link
+    // colors, and rendered last so they sit on top of bubbles, the projectile
+    // and even the aim line until they fade.
+    if (pointBursts.length) {
+      const now = performance.now();
+      const isLight = M.isLight;
+      const bg = isLight ? 255 : 0;
+      const titleC = M.titleColor();
+      const linkC  = M.linkColor();
+      // Plain text on the popup row — no per-burst border now that the
+      // separator line fences the strip off from the bubble area. Score
+      // bursts opening-flash, combo banners color-flash, but neither moves.
+      const drawBurstText = (pb, color) => {
+        const text = pb.text;
+        // Clamp the text so it always sits inside the popup box's side
+        // verticals — otherwise a "+N" anchored at the left edge would have
+        // its "+" silently swallowed by the border via the frameKeys skip.
+        const minCol = panelLeft + 1;
+        const maxCol = panelLeft + panelWidth - 2;
+        let startCol = pb.col - Math.floor(text.length / 2);
+        if (startCol < minCol) startCol = minCol;
+        if (startCol + text.length - 1 > maxCol) startCol = maxCol - text.length + 1;
+        for (let i = 0; i < text.length; i++) {
+          const col = startCol + i;
+          if (col < 0 || col >= cols) continue;
+          if (frameKeys.has(col + ',' + pb.row)) continue;
+          put(col, pb.row, text[i], color);
+        }
+      };
+
+      // Score bursts ("+N") — first pass.
+      for (let p = 0; p < pointBursts.length; p++) {
+        const pb = pointBursts[p];
+        if (pb.kind === 'combo') continue;
+        const elapsed = now - pb.tStart;
+        const t = Math.max(0, Math.min(1, elapsed / POINT_BURST_DURATION_MS));
+        let fade;
+        if (t < 0.7) fade = 1;
+        else         fade = Math.max(0, 1 - (t - 0.7) / 0.3);
+        const baseColor = elapsed < 140 ? titleC : pb.color;
+        drawBurstText(pb, blendToBg(baseColor, fade, bg));
+      }
+
+      // Combo banners — drawn last so they sit on top of score bursts.
+      for (let p = 0; p < pointBursts.length; p++) {
+        const pb = pointBursts[p];
+        if (pb.kind !== 'combo') continue;
+        const elapsed = now - pb.tStart;
+        const t = Math.max(0, Math.min(1, elapsed / COMBO_BURST_DURATION_MS));
+        const flashOn  = (Math.floor(elapsed / 90) & 1) === 0;
+        const baseColor = flashOn ? linkC : titleC;
+        let fade;
+        if (t < 0.08)      fade = t / 0.08;
+        else if (t < 0.7)  fade = 1;
+        else               fade = Math.max(0, 1 - (t - 0.7) / 0.3);
+        drawBurstText(pb, blendToBg(baseColor, fade, bg));
       }
     }
 
