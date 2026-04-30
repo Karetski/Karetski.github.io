@@ -19,3 +19,35 @@ html, body {
   width: 100%;
   height: 100%;
 }
+
+#title {
+  position: fixed;
+  color: transparent;
+  cursor: text;
+  user-select: text;
+  -webkit-user-select: text;
+  white-space: pre;
+}
+
+#title::selection {
+  background: rgba(255, 255, 255, 0.25);
+  color: transparent;
+}
+
+#title::-moz-selection {
+  background: rgba(255, 255, 255, 0.25);
+  color: transparent;
+}
+
+#links {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+}
+
+#links a {
+  position: absolute;
+  display: block;
+  pointer-events: auto;
+  cursor: pointer;
+}
