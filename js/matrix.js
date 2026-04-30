@@ -87,7 +87,16 @@
   }
 
   // ----- State ----------------------------------------------------------
-  let isLightMode = true;
+  // Theme is persisted under a stable key so light/dark stays in sync across
+  // pages and tabs of the site. Default to light when nothing is stored yet.
+  const THEME_KEY = 'ak.theme';
+  const readStoredTheme = () => {
+    try { return localStorage.getItem(THEME_KEY); } catch (_) { return null; }
+  };
+  const writeStoredTheme = (value) => {
+    try { localStorage.setItem(THEME_KEY, value); } catch (_) { /* ignore */ }
+  };
+  let isLightMode = readStoredTheme() !== 'dark';
   const isPlayMode = document.body.dataset.page === 'play';
   let dpr = 1;
   let cellW = 0, cellH = 0, cols = 0, rows = 0;
@@ -589,6 +598,7 @@
     toggleBtn.style.height = cellH + 'px';
     toggleBtn.onclick = () => {
       isLightMode = !isLightMode;
+      writeStoredTheme(isLightMode ? 'light' : 'dark');
       colorStrCache = new Map();
       setupGrid();
       refreshPickers();
@@ -941,6 +951,17 @@
   window.addEventListener('resize', () => {
     clearTimeout(resizeT);
     resizeT = setTimeout(setupGrid, 100);
+  });
+
+  // Mirror theme changes made in other tabs/pages of the site.
+  window.addEventListener('storage', (e) => {
+    if (e.key !== THEME_KEY) return;
+    const wantLight = e.newValue !== 'dark';
+    if (wantLight === isLightMode) return;
+    isLightMode = wantLight;
+    colorStrCache = new Map();
+    setupGrid();
+    refreshPickers();
   });
 
   // ----- Debug panel ----------------------------------------------------
