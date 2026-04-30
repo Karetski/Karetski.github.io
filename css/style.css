@@ -30,12 +30,22 @@ html, body {
 }
 
 #title::selection {
-  background: rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 0, 0.45);
   color: transparent;
 }
 
 #title::-moz-selection {
-  background: rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 0, 0.45);
+  color: transparent;
+}
+
+html.light #title::selection {
+  background: rgba(200, 175, 0, 0.45);
+  color: transparent;
+}
+
+html.light #title::-moz-selection {
+  background: rgba(200, 175, 0, 0.45);
   color: transparent;
 }
 
@@ -48,8 +58,13 @@ html, body {
 #links a {
   position: absolute;
   display: block;
+  box-sizing: content-box;
+  padding: 8px 12px;
+  margin: -8px -12px;
   pointer-events: auto;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 
 #theme-toggle {
@@ -63,11 +78,14 @@ html, body {
   display: block;
   appearance: none;
   border: 0;
-  margin: 0;
-  padding: 0;
+  box-sizing: content-box;
+  margin: -8px -12px;
+  padding: 8px 12px;
   background: transparent;
   color: transparent;
   font: inherit;
   pointer-events: auto;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
