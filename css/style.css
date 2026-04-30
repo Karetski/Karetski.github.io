@@ -30,22 +30,22 @@ html, body {
 }
 
 #title::selection {
-  background: rgba(255, 255, 0, 0.45);
+  background: rgba(100, 130, 255, 0.45);
   color: transparent;
 }
 
 #title::-moz-selection {
-  background: rgba(255, 255, 0, 0.45);
+  background: rgba(100, 130, 255, 0.45);
   color: transparent;
 }
 
 html.light #title::selection {
-  background: rgba(200, 175, 0, 0.45);
+  background: rgba(0, 0, 255, 0.45);
   color: transparent;
 }
 
 html.light #title::-moz-selection {
-  background: rgba(200, 175, 0, 0.45);
+  background: rgba(0, 0, 255, 0.45);
   color: transparent;
 }
 
