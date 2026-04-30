@@ -1,7 +1,7 @@
 (() => {
   // ----- Config ---------------------------------------------------------
   const FONT_PX = 18;
-  const LINE_HEIGHT    = 1.15; // cellH = 21: ~3 px breathing room below em-box for descenders ([ { y g)
+  const LINE_HEIGHT    = 1.0; // tight look
   const CHARSET = '!#$%&*+,./:;<=>?@[]^_{|}~0123456789';
   const TITLE = 'Alexey Karetski';
   const FLIP_MIN_MS = 800;
@@ -12,7 +12,7 @@
   const COL_TITLE = [255, 255, 255]; // white
   const COL_LINK = [100, 180, 255]; // Firefox-style blue — interactive
   const COL_FRAME = [255, 255, 255]; // white frame borders
-  const FONT_FAMILY = "'JetBrains Mono', monospace";
+  const FONT_FAMILY = "'Sometype Mono', monospace";
 
   const LINKS = [
     { label: 'linkedin', href: 'https://www.linkedin.com/in/karetski' },
@@ -107,7 +107,7 @@
     screenCanvas.style.height = H + 'px';
 
     gctx.font = `${FONT_PX}px ${FONT_FAMILY}`;
-    gctx.textBaseline = 'top';
+    gctx.textBaseline = 'middle';
     // Pre-clear once — the per-frame loop only repaints cells that changed
     gctx.fillStyle = '#000';
     gctx.fillRect(0, 0, W, H);
@@ -331,10 +331,10 @@
           gctx.save();
           gctx.translate(cx, cy);
           gctx.scale(1, cellH / FONT_PX);
-          gctx.fillText(cell.char, 0, 0);
+          gctx.fillText(cell.char, 0, FONT_PX / 2 - 1);
           gctx.restore();
         } else {
-          gctx.fillText(cell.char, cx, cy);
+          gctx.fillText(cell.char, cx, cy + cellH / 2 - 1);
         }
         gctx.restore();
         cell.lastHeatLevel = heatLevel;
@@ -511,7 +511,7 @@
   };
 
   if (document.fonts && document.fonts.load) {
-    document.fonts.load(`${FONT_PX}px 'JetBrains Mono'`).then(boot, boot);
+    document.fonts.load(`${FONT_PX}px 'Sometype Mono'`).then(boot, boot);
   } else {
     boot();
   }
