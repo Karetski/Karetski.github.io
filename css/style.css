@@ -51,3 +51,23 @@ html, body {
   pointer-events: auto;
   cursor: pointer;
 }
+
+#theme-toggle {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+}
+
+#theme-toggle button {
+  position: absolute;
+  display: block;
+  appearance: none;
+  border: 0;
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  color: transparent;
+  font: inherit;
+  pointer-events: auto;
+  cursor: pointer;
+}

@@ -19,6 +19,8 @@
     { label: 'github', href: 'https://github.com/karetski' },
     { label: 'x', href: 'https://x.com/karetski23' },
   ];
+  const TOGGLE_DARK_LABEL = 'switch to dark';
+  const TOGGLE_LIGHT_LABEL = 'switch to light';
   const FRAME_PAD = 1; // min chars of horizontal padding inside each frame
   const FRAME_GAP = 1; // blank rows between the title frame and the links frame
   const FRAME_CHARS = {
@@ -28,7 +30,7 @@
   const FRAME_BORDER_CHARS = '┏┓┗┛┃━┣┫';
 
   // Yellow → orange spread, sampled per cell at init for textured background
-  const PALETTE = [
+  const PALETTE_DARK = [
     [255, 225, 50],   // bright gold
     [255, 185, 40],   // bright amber
     [255, 145, 30],   // bright pumpkin
@@ -37,28 +39,80 @@
     [255, 165, 50],   // bright vivid amber
     [255, 245, 60],   // brilliant saturated yellow
   ];
-  const randPaletteColor = () => PALETTE[(Math.random() * PALETTE.length) | 0];
 
-  // Pre-cached `rgb(...)` strings for each color quantized to 10 heat levels,
-  // so the hot draw loop never allocates a new string per cell per frame.
+  const PALETTE_LIGHT = [
+    [215, 150, 0],    // bright burnished gold
+    [230, 115, 0],    // warm orange
+    [190, 105, 0],    // deep amber
+    [245, 170, 25],   // bright honey
+    [170, 120, 0],    // ochre
+    [220, 90, 0],     // copper
+    [200, 155, 15],   // muted yellow
+  ];
+
+  // ----- State ----------------------------------------------------------
+  let isLightMode = true;
+  let dpr = 1;
+  let cellW = 0, cellH = 0, cols = 0, rows = 0;
+  let cells = [];
+  const startTime = performance.now();
+  let lastFrameTime = 0;
+  const pointer = { active: false, x: 0, y: 0, lastX: 0, lastY: 0 };
+
+  const getPalette = () => isLightMode ? PALETTE_LIGHT : PALETTE_DARK;
+  const randPaletteColor = () => {
+    const p = getPalette();
+    return p[(Math.random() * p.length) | 0];
+  };
+
+  const getThemeColors = () => {
+    if (isLightMode) {
+      return {
+        bg: '#fff',
+        bgRGB: [255, 255, 255],
+        title: [0, 0, 0],
+        link: [0, 80, 200],
+        frame: [0, 0, 0],
+        sep: [180, 180, 180],
+        glow: 0.1, // darken at peak heat in light mode
+        glowColor: [0, 0, 0]
+      };
+    }
+    return {
+      bg: '#000',
+      bgRGB: [0, 0, 0],
+      title: COL_TITLE,
+      link: COL_LINK,
+      frame: COL_FRAME,
+      sep: [80, 80, 80],
+      glow: HEAT_GLOW,
+      glowColor: [255, 255, 255]
+    };
+  };
+
+  // Pre-cached `rgb(...)` strings for each color quantized to 10 heat levels
   const colorStrCache = new Map();
   const getColorStrs = (color) => {
-    const key = (color[0] << 16) | (color[1] << 8) | color[2];
+    const theme = getThemeColors();
+    const key = (color[0] << 16) | (color[1] << 8) | color[2] | (isLightMode ? 1 << 24 : 0);
     let arr = colorStrCache.get(key);
     if (arr) return arr;
     arr = new Array(10);
     for (let h = 0; h < 10; h++) {
       const heat = h * 0.1;
-      const blend = heat * HEAT_GLOW;
+      const blend = heat * theme.glow;
       const inv = 1 - blend;
-      const cr = (color[0] * inv + 255 * blend) | 0;
-      const cg = (color[1] * inv + 255 * blend) | 0;
-      const cb = (color[2] * inv + 255 * blend) | 0;
+      const cr = (color[0] * inv + theme.glowColor[0] * blend) | 0;
+      const cg = (color[1] * inv + theme.glowColor[1] * blend) | 0;
+      const cb = (color[2] * inv + theme.glowColor[2] * blend) | 0;
       arr[h] = `rgb(${cr},${cg},${cb})`;
     }
     colorStrCache.set(key, arr);
     return arr;
   };
+
+  const randChar = () => CHARSET[(Math.random() * CHARSET.length) | 0];
+  const randDelay = () => FLIP_MIN_MS + Math.random() * (FLIP_MAX_MS - FLIP_MIN_MS);
 
   // ----- Canvases -------------------------------------------------------
   const screenCanvas = document.getElementById('screen');
@@ -72,17 +126,6 @@
 
   const gridCanvas = document.createElement('canvas');
   const gctx = gridCanvas.getContext('2d', { alpha: false });
-
-  // ----- State ----------------------------------------------------------
-  let dpr = 1;
-  let cellW = 0, cellH = 0, cols = 0, rows = 0;
-  let cells = [];
-  const startTime = performance.now();
-  let lastFrameTime = 0;
-  const pointer = { active: false, x: 0, y: 0, lastX: 0, lastY: 0 };
-
-  const randChar = () => CHARSET[(Math.random() * CHARSET.length) | 0];
-  const randDelay = () => FLIP_MIN_MS + Math.random() * (FLIP_MAX_MS - FLIP_MIN_MS);
 
   // ----- Grid setup -----------------------------------------------------
   const setupGrid = () => {
@@ -109,7 +152,8 @@
     gctx.font = `${FONT_PX}px ${FONT_FAMILY}`;
     gctx.textBaseline = 'middle';
     // Pre-clear once — the per-frame loop only repaints cells that changed
-    gctx.fillStyle = '#000';
+    const theme = getThemeColors();
+    gctx.fillStyle = theme.bg;
     gctx.fillRect(0, 0, W, H);
 
     cols = Math.floor(W / cellW);
@@ -160,17 +204,20 @@
       }
     };
 
-    // Sync both frames to the wider group's natural width
+    // Sync frames to the wider group's natural width
+    const toggleLabel = isLightMode ? TOGGLE_DARK_LABEL : TOGGLE_LIGHT_LABEL;
     const longestLink = Math.max(...LINKS.map(l => l.label.length));
     const titleNaturalW = TITLE.length + 2 * FRAME_PAD + 2;
     const linksNaturalW = longestLink + 2 * FRAME_PAD + 2;
-    const frameW = Math.max(titleNaturalW, linksNaturalW);
+    const toggleNaturalW = toggleLabel.length + 2 * FRAME_PAD + 2;
+    const frameW = Math.max(titleNaturalW, linksNaturalW, toggleNaturalW);
     const interiorW = frameW - 2;
 
-    // Total height of the combined frames (Title + Gap + Links)
+    // Total height of the combined frames (Title + Gap + Links + Gap + Toggle)
     const titleFrameH = 3;
     const linkFrameH = LINKS.length * 2 + 1;
-    const totalH = titleFrameH + FRAME_GAP + linkFrameH;
+    const toggleFrameH = 3;
+    const totalH = titleFrameH + FRAME_GAP + linkFrameH + FRAME_GAP + toggleFrameH;
 
     // Center the whole group vertically
     const groupTop = Math.floor((rows - totalH) / 2);
@@ -181,9 +228,9 @@
     const titleRow = titleFrameTop + 1;
     const titleStartCol = frameLeft + 1 + Math.floor((interiorW - TITLE.length) / 2);
 
-    drawFrame(titleFrameTop, frameLeft, frameW, titleFrameH, COL_FRAME);
+    drawFrame(titleFrameTop, frameLeft, frameW, titleFrameH, theme.frame);
     for (let i = 0; i < TITLE.length; i++) {
-      setLocked(titleRow, titleStartCol + i, TITLE[i], COL_TITLE);
+      setLocked(titleRow, titleStartCol + i, TITLE[i], theme.title);
     }
 
     // Selectable title overlay — transparent DOM text aligned with the canvas glyphs
@@ -198,7 +245,7 @@
     // Links block — framed below the title, each link centered on its own row
     const linkFrameTop = titleFrameTop + titleFrameH + FRAME_GAP;
 
-    drawFrame(linkFrameTop, frameLeft, frameW, linkFrameH, COL_FRAME);
+    drawFrame(linkFrameTop, frameLeft, frameW, linkFrameH, theme.frame);
 
     const linksEl = document.getElementById('links');
     linksEl.innerHTML = '';
@@ -208,18 +255,17 @@
       const startCol = frameLeft + 1 + Math.floor((interiorW - link.label.length) / 2);
 
       for (let i = 0; i < link.label.length; i++) {
-        setLocked(row, startCol + i, link.label[i], COL_LINK);
+        setLocked(row, startCol + i, link.label[i], theme.link);
       }
 
       // Add a light separator between links
       if (li < LINKS.length - 1) {
         const sepRow = row + 1;
-        const sepColor = [80, 80, 80];
-        setLocked(sepRow, frameLeft, '┣', COL_FRAME);
+        setLocked(sepRow, frameLeft, '┣', theme.frame);
         for (let c = 0; c < interiorW; c++) {
-          setLocked(sepRow, frameLeft + 1 + c, '━', sepColor);
+          setLocked(sepRow, frameLeft + 1 + c, '━', theme.sep);
         }
-        setLocked(sepRow, frameLeft + frameW - 1, '┫', COL_FRAME);
+        setLocked(sepRow, frameLeft + frameW - 1, '┫', theme.frame);
       }
 
       const a = document.createElement('a');
@@ -233,6 +279,32 @@
       a.style.height = cellH + 'px';
       linksEl.appendChild(a);
     }
+
+    // Theme toggle block, styled and aligned like the other grid items
+    const toggleFrameTop = linkFrameTop + linkFrameH + FRAME_GAP;
+    const toggleRow = toggleFrameTop + 1;
+    const toggleStartCol = frameLeft + 1 + Math.floor((interiorW - toggleLabel.length) / 2);
+
+    drawFrame(toggleFrameTop, frameLeft, frameW, toggleFrameH, theme.frame);
+    for (let i = 0; i < toggleLabel.length; i++) {
+      setLocked(toggleRow, toggleStartCol + i, toggleLabel[i], theme.link);
+    }
+
+    const toggleEl = document.getElementById('theme-toggle');
+    toggleEl.innerHTML = '';
+
+    const btn = document.createElement('button');
+    btn.textContent = toggleLabel;
+    btn.setAttribute('aria-label', toggleLabel);
+    btn.style.left = (toggleStartCol * cellW) + 'px';
+    btn.style.top = (toggleRow * cellH) + 'px';
+    btn.style.width = (toggleLabel.length * cellW) + 'px';
+    btn.style.height = cellH + 'px';
+    btn.onclick = () => {
+      isLightMode = !isLightMode;
+      setupGrid();
+    };
+    toggleEl.appendChild(btn);
 
     gl.viewport(0, 0, screenCanvas.width, screenCanvas.height);
   };
@@ -322,7 +394,7 @@
         gctx.beginPath();
         gctx.rect(cx, cy, cellW, cellH);
         gctx.clip();
-        gctx.fillStyle = '#000';
+        gctx.fillStyle = getThemeColors().bg;
         gctx.fillRect(cx, cy, cellW, cellH);
         gctx.fillStyle = cell.colorStrs[heatLevel];
         if (cell.isFrameBorder) {
@@ -357,6 +429,7 @@
     uniform sampler2D uTex;
     uniform vec2  uRes;
     uniform float uTime;
+    uniform float uLight;
     varying vec2 vUv;
 
     float hash(vec2 p) {
@@ -385,22 +458,27 @@
       // Phosphor mask — RGB triad on every 3 device pixels of the X axis
       float px = mod(gl_FragCoord.x, 3.0);
       vec3 mask;
-      if      (px < 1.0) mask = vec3(1.15, 0.80, 0.80);
-      else if (px < 2.0) mask = vec3(0.80, 1.15, 0.80);
-      else               mask = vec3(0.80, 0.80, 1.15);
+      if (uLight > 0.5) {
+        // Subtle mask for light mode
+        mask = vec3(0.98, 0.98, 1.02);
+      } else {
+        if      (px < 1.0) mask = vec3(1.15, 0.80, 0.80);
+        else if (px < 2.0) mask = vec3(0.80, 1.15, 0.80);
+        else               mask = vec3(0.80, 0.80, 1.15);
+      }
       col *= mask;
 
       // Vignette
       float vd  = length(vUv - 0.5);
       float vig = smoothstep(0.92, 0.30, vd);
-      col *= vig;
+      col *= mix(1.0, vig, 1.0 - uLight * 0.5);
 
       // Phosphor flicker (per-pixel, frame-rate driven)
       float n = hash(floor(gl_FragCoord.xy) + floor(uTime * 60.0));
       col += (n - 0.5) * 0.025;
 
       // Mild gamma curve — keeps the bright phosphor punchy
-      col = pow(max(col, 0.0), vec3(0.95));
+      col = pow(max(col, 0.0), vec3(uLight > 0.5 ? 1.05 : 0.95));
 
       gl_FragColor = vec4(col, 1.0);
     }
@@ -445,6 +523,7 @@
   const uTex = gl.getUniformLocation(program, 'uTex');
   const uRes = gl.getUniformLocation(program, 'uRes');
   const uTime = gl.getUniformLocation(program, 'uTime');
+  const uLight = gl.getUniformLocation(program, 'uLight');
 
   const tex = gl.createTexture();
   gl.bindTexture(gl.TEXTURE_2D, tex);
@@ -465,6 +544,7 @@
     gl.viewport(0, 0, screenCanvas.width, screenCanvas.height);
     gl.uniform2f(uRes, screenCanvas.width, screenCanvas.height);
     gl.uniform1f(uTime, (now - startTime) / 1000);
+    gl.uniform1f(uLight, isLightMode ? 1.0 : 0.0);
 
     gl.drawArrays(gl.TRIANGLES, 0, 6);
   };
