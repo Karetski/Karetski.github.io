@@ -126,6 +126,16 @@
   // gives the bubble field a visible "lit" region without breaking the CRT
   // pipeline.
   let playfieldBounds = null;
+  // Combo flash — the bg outside the playfield smoothly ramps toward the
+  // un-dampened (index-page) palette, holds, then eases back. Driven by an
+  // attack/hold/decay envelope so the onset and fade feel organic instead of
+  // a hard palette swap. flashStart === 0 means inactive.
+  let flashStart    = 0;
+  let flashAttack   = 120;
+  let flashHold     = 180;
+  let flashDecay    = 520;
+  let flashIntensity = 0;
+  let flashWasActive = false;
   const startTime = performance.now();
   let lastFrameTime = 0;
   const pointer = { active: false, x: 0, y: 0, lastX: 0, lastY: 0 };
@@ -180,7 +190,19 @@
     const base = isLightMode ? config.paletteLight : config.paletteDark;
     if (!isPlayMode) return base;
     const op = inPlay ? PLAY_BG_OPACITY_FADED : PLAY_BG_OPACITY_VISIBLE;
-    return base.map((c) => dimToBg(desaturate(c, PLAY_BG_SAT), op));
+    const dampened = base.map((c) => dimToBg(desaturate(c, PLAY_BG_SAT), op));
+    // Outside the playfield, lerp toward the un-dampened palette by the
+    // current flash envelope — so newly flipped cells smoothly track the
+    // splash instead of snapping between two states.
+    if (!inPlay && flashIntensity > 0.001) {
+      const t = flashIntensity;
+      return dampened.map((d, i) => [
+        d[0] + (base[i][0] - d[0]) * t,
+        d[1] + (base[i][1] - d[1]) * t,
+        d[2] + (base[i][2] - d[2]) * t,
+      ]);
+    }
+    return dampened;
   };
   const getVividPalette = () => (isLightMode ? config.paletteLight : config.paletteDark);
   const applyBrightness = (color) => {
@@ -395,6 +417,13 @@
     on: (evt, fn) => {
       if (!gameListeners[evt]) gameListeners[evt] = [];
       gameListeners[evt].push(fn);
+    },
+    flashBackground: (durationMs) => {
+      // Sum durationMs into the envelope's hold time so combo size scales
+      // how long the field lingers vivid; attack and decay stay fixed so
+      // the onset feel is consistent across all combos.
+      flashHold = Math.max(60, Math.min(700, (durationMs || 250) - flashAttack));
+      flashStart = performance.now();
     },
   };
 
@@ -809,6 +838,22 @@
     const innerPalette = isPlayMode ? getPalette(true) : outerPalette;
     const theme = getThemeColors();
     const pb = playfieldBounds;
+    // Flash live-blend: each frame, lerp every outer cell's stored colour
+    // toward the un-dampened palette by `flashIntensity`. The cell.color
+    // itself isn't mutated — only the displayed colour — so the flash leaves
+    // no residue once the envelope returns to 0. One extra cleanup frame is
+    // forced when intensity drops to 0 so cells repaint with their plain
+    // stored colour on the way out.
+    const flashActive  = flashIntensity > 0.001;
+    const flashCleanup = !flashActive && flashWasActive;
+    flashWasActive = flashActive;
+    const flashBaseP   = (flashActive || flashCleanup)
+      ? (isLightMode ? config.paletteLight : config.paletteDark)
+      : null;
+    // Outer cells flip faster during the flash so the field genuinely churns
+    // in sync with the lit-up palette — a static recolor reads as a slab,
+    // accelerated turnover reads alive.
+    const flashFlipMul = flashActive ? 1 + flashIntensity * 6 : 1;
     // Aging + radial fade run in both modes. In play mode they compose with
     // the per-palette desat/dim — cells start from the play palette (already
     // pre-dimmed) and age further toward the theme bg, so the field reads
@@ -826,7 +871,8 @@
         const palette = inPlay ? innerPalette : outerPalette;
 
         if (!cell.locked) {
-          const baseFlipProb = sampleFlipProb(c, r, now, dt);
+          let baseFlipProb = sampleFlipProb(c, r, now, dt);
+          if (!inPlay && flashFlipMul > 1) baseFlipProb *= flashFlipMul;
           // Heat boosts the flip rate so disturbed cells churn faster.
           const flipProb = Math.min(1, baseFlipProb + cell.heat);
           if (Math.random() < flipProb) {
@@ -868,8 +914,22 @@
           }
           const vis = fadeActive ? cell.visibility : 1;
           const opacity = qf * vis;
-          if (qf < 1 || vis < 1) {
-            const aged = dimToBg(isPlayMode ? desaturate(cell.color, qf) : cell.color, opacity);
+          let baseColor = cell.color;
+          const flashThisCell = flashActive && !inPlay;
+          if (flashThisCell) {
+            const v = flashBaseP[cell.colorIndex];
+            baseColor = [
+              cell.color[0] + (v[0] - cell.color[0]) * flashIntensity,
+              cell.color[1] + (v[1] - cell.color[1]) * flashIntensity,
+              cell.color[2] + (v[2] - cell.color[2]) * flashIntensity,
+            ];
+            cell.dirty = true;
+          } else if (flashCleanup && !inPlay) {
+            cell.dirty = true;
+          }
+          if (qf < 1 || vis < 1 || flashThisCell) {
+            const colorIn = isPlayMode ? desaturate(baseColor, qf) : baseColor;
+            const aged = dimToBg(colorIn, opacity);
             drawColorStr = getColorStr(aged);
           }
         }
@@ -1092,7 +1152,26 @@
   };
 
   // ----- Loop -----------------------------------------------------------
+  // Smooth attack/hold/decay envelope. Smoothstep on each ramp eases the
+  // transitions so the bg breathes in and out instead of jumping.
+  const smoothstep = (t) => t * t * (3 - 2 * t);
+  const updateFlashIntensity = (now) => {
+    if (!flashStart) { flashIntensity = 0; return; }
+    const e = now - flashStart;
+    if (e < 0) { flashIntensity = 0; return; }
+    if (e < flashAttack) {
+      flashIntensity = smoothstep(e / flashAttack);
+    } else if (e < flashAttack + flashHold) {
+      flashIntensity = 1;
+    } else if (e < flashAttack + flashHold + flashDecay) {
+      flashIntensity = 1 - smoothstep((e - flashAttack - flashHold) / flashDecay);
+    } else {
+      flashIntensity = 0;
+      flashStart = 0;
+    }
+  };
   const loop = (now) => {
+    updateFlashIntensity(now);
     updateAndDrawGrid(now);
     renderCRT(now);
     requestAnimationFrame(loop);

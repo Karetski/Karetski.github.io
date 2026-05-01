@@ -396,6 +396,12 @@
         score += totalEarned;
         const bannerCol = burstSectLeft + Math.floor(burstSectW / 2);
         addPointBurst(bannerCol, popupRow, '✦ +' + totalEarned + ' combo', M.titleColor(), 'combo');
+        // Flash the bg around the playfield with the un-dampened (index-page)
+        // palette for a beat — duration scales with chain size so big combos
+        // hold the celebration longer.
+        if (M.flashBackground) {
+          M.flashBackground(Math.min(700, 280 + totalPopped * 25));
+        }
       } else if (waves === 1) {
         score += totalEarned;
         if (lastBurstCol !== null) {
