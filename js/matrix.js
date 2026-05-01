@@ -307,7 +307,7 @@
     // Only scale characters that have vertical components and need to connect vertically.
     // Purely horizontal lines (═, ─) and separators with horizontal focus (╟, ╢)
     // are often better rendered without scaling to preserve their double-line look.
-    cell.isFrameBorder = '\u2554\u2557\u255A\u255D\u2551\u2550\u255F\u2562'.indexOf(ch) >= 0;
+    cell.isFrameBorder = '\u2554\u2557\u255A\u255D\u2551\u2550\u255F\u2562\u2500'.indexOf(ch) >= 0;
     cell.dirty = true;
   };
   // Returns a previously-locked cell to the flipping background, picking a
@@ -409,6 +409,71 @@
 
   const gridCanvas = document.createElement('canvas');
   const gctx = gridCanvas.getContext('2d', { alpha: false });
+
+  // Render box-drawing chars as fillRect strokes so the borders are
+  // pixel-perfect and font-independent — Sometype Mono and any fallback
+  // shift these glyphs around just enough to look crooked at the join
+  // between cells, especially after we resize cells to fit descenders.
+  const drawBoxChar = (ch, cx, cy) => {
+    // 1px strokes snapped to integer pixel rows/cols so lines stay crisp
+    // regardless of fractional cell positions. Double-line chars use a
+    // 1+1+1 pattern (stroke / gap / stroke) centred on the cell midpoint.
+    const xC = Math.round(cx + cellW / 2);
+    const yC = Math.round(cy + cellH / 2);
+    const xL = Math.round(cx);
+    const xR = Math.round(cx + cellW);
+    const yT = Math.round(cy);
+    const yB = Math.round(cy + cellH);
+    const hRow = (y, x0, x1) => gctx.fillRect(x0, y, x1 - x0, 1);
+    const vCol = (x, y0, y1) => gctx.fillRect(x, y0, 1, y1 - y0);
+    switch (ch) {
+      case '─':
+        hRow(yC, xL, xR);
+        break;
+      case '═':
+        hRow(yC - 1, xL, xR);
+        hRow(yC + 1, xL, xR);
+        break;
+      case '║':
+        vCol(xC - 1, yT, yB);
+        vCol(xC + 1, yT, yB);
+        break;
+      case '╔':
+        hRow(yC - 1, xC - 1, xR);
+        hRow(yC + 1, xC + 1, xR);
+        vCol(xC - 1, yC - 1, yB);
+        vCol(xC + 1, yC + 1, yB);
+        break;
+      case '╗':
+        hRow(yC - 1, xL, xC + 2);
+        hRow(yC + 1, xL, xC);
+        vCol(xC + 1, yC - 1, yB);
+        vCol(xC - 1, yC + 1, yB);
+        break;
+      case '╚':
+        hRow(yC + 1, xC - 1, xR);
+        hRow(yC - 1, xC + 1, xR);
+        vCol(xC - 1, yT, yC + 2);
+        vCol(xC + 1, yT, yC);
+        break;
+      case '╝':
+        hRow(yC + 1, xL, xC + 2);
+        hRow(yC - 1, xL, xC);
+        vCol(xC + 1, yT, yC + 2);
+        vCol(xC - 1, yT, yC);
+        break;
+      case '╟':
+        vCol(xC - 1, yT, yB);
+        vCol(xC + 1, yT, yB);
+        hRow(yC, xC + 2, xR);
+        break;
+      case '╢':
+        vCol(xC - 1, yT, yB);
+        vCol(xC + 1, yT, yB);
+        hRow(yC, xL, xC - 1);
+        break;
+    }
+  };
 
   // ----- Grid setup -----------------------------------------------------
   const setupGrid = () => {
@@ -792,11 +857,7 @@
         gctx.fillRect(cx, cy, cellW, cellH);
         gctx.fillStyle = drawColorStr;
         if (cell.isFrameBorder) {
-          gctx.save();
-          gctx.translate(cx, cy);
-          gctx.scale(1, cellH / FONT_PX);
-          gctx.fillText(cell.char, 0, FONT_PX / 2);
-          gctx.restore();
+          drawBoxChar(cell.char, cx, cy);
         } else {
           gctx.fillText(cell.char, cx, cy + cellH / 2);
         }
