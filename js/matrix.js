@@ -30,10 +30,10 @@
   const FRAME_PAD = 1;
   const FRAME_GAP = 1;
   const FRAME_CHARS = {
-    tl: '\u2554', tr: '\u2557', bl: '\u255A', br: '\u255D',
-    h: '\u2550', v: '\u2551'
+    tl: '\u250C', tr: '\u2510', bl: '\u2514', br: '\u2518',
+    h: '\u2500', v: '\u2502'
   };
-  const FRAME_BORDER_CHARS = '\u2554\u2557\u255A\u255D\u2551\u2550\u255F\u2562\u2500';
+  const FRAME_BORDER_CHARS = '\u250C\u2510\u2514\u2518\u2502\u2500\u251C\u2524';
 
   // ----- Tweakable config (live-editable via debug panel) ---------------
   const defaultConfig = {
@@ -307,7 +307,7 @@
     // Only scale characters that have vertical components and need to connect vertically.
     // Purely horizontal lines (═, ─) and separators with horizontal focus (╟, ╢)
     // are often better rendered without scaling to preserve their double-line look.
-    cell.isFrameBorder = '\u2554\u2557\u255A\u255D\u2551\u2550\u255F\u2562\u2500'.indexOf(ch) >= 0;
+    cell.isFrameBorder = '\u250C\u2510\u2514\u2518\u2502\u2500\u251C\u2524'.indexOf(ch) >= 0;
     cell.dirty = true;
   };
   // Returns a previously-locked cell to the flipping background, picking a
@@ -415,9 +415,10 @@
   // shift these glyphs around just enough to look crooked at the join
   // between cells, especially after we resize cells to fit descenders.
   const drawBoxChar = (ch, cx, cy) => {
-    // 1px strokes snapped to integer pixel rows/cols so lines stay crisp
-    // regardless of fractional cell positions. Double-line chars use a
-    // 1+1+1 pattern (stroke / gap / stroke) centred on the cell midpoint.
+    // 1px single-line strokes snapped to integer pixel rows/cols. Each char
+    // uses a single horizontal row at yC and/or a single vertical col at xC,
+    // so corners are clean 90° joins and T-junctions are simple V+H without
+    // the outer/inner-L stagger that double-line chars produce.
     const xC = Math.round(cx + cellW / 2);
     const yC = Math.round(cy + cellH / 2);
     const xL = Math.round(cx);
@@ -430,47 +431,32 @@
       case '─':
         hRow(yC, xL, xR);
         break;
-      case '═':
-        hRow(yC - 1, xL, xR);
-        hRow(yC + 1, xL, xR);
+      case '│':
+        vCol(xC, yT, yB);
         break;
-      case '║':
-        vCol(xC - 1, yT, yB);
-        vCol(xC + 1, yT, yB);
+      case '┌':
+        hRow(yC, xC, xR);
+        vCol(xC, yC, yB);
         break;
-      case '╔':
-        hRow(yC - 1, xC - 1, xR);
-        hRow(yC + 1, xC + 1, xR);
-        vCol(xC - 1, yC - 1, yB);
-        vCol(xC + 1, yC + 1, yB);
+      case '┐':
+        hRow(yC, xL, xC + 1);
+        vCol(xC, yC, yB);
         break;
-      case '╗':
-        hRow(yC - 1, xL, xC + 2);
-        hRow(yC + 1, xL, xC);
-        vCol(xC + 1, yC - 1, yB);
-        vCol(xC - 1, yC + 1, yB);
+      case '└':
+        hRow(yC, xC, xR);
+        vCol(xC, yT, yC + 1);
         break;
-      case '╚':
-        hRow(yC + 1, xC - 1, xR);
-        hRow(yC - 1, xC + 1, xR);
-        vCol(xC - 1, yT, yC + 2);
-        vCol(xC + 1, yT, yC);
+      case '┘':
+        hRow(yC, xL, xC + 1);
+        vCol(xC, yT, yC + 1);
         break;
-      case '╝':
-        hRow(yC + 1, xL, xC + 2);
-        hRow(yC - 1, xL, xC);
-        vCol(xC + 1, yT, yC + 2);
-        vCol(xC - 1, yT, yC);
+      case '├':
+        vCol(xC, yT, yB);
+        hRow(yC, xC + 1, xR);
         break;
-      case '╟':
-        vCol(xC - 1, yT, yB);
-        vCol(xC + 1, yT, yB);
-        hRow(yC, xC + 2, xR);
-        break;
-      case '╢':
-        vCol(xC - 1, yT, yB);
-        vCol(xC + 1, yT, yB);
-        hRow(yC, xL, xC - 1);
+      case '┤':
+        vCol(xC, yT, yB);
+        hRow(yC, xL, xC);
         break;
     }
   };
@@ -649,11 +635,11 @@
 
         if (li < LINKS.length - 1) {
           const sepRow = linkRow + 1;
-          setLocked(sepRow, stackLeft, '╟', theme.frame);
+          setLocked(sepRow, stackLeft, '├', theme.frame);
           for (let c = 0; c < stackInteriorW; c++) {
             setLocked(sepRow, stackLeft + 1 + c, '─', theme.sep);
           }
-          setLocked(sepRow, stackLeft + stackW - 1, '╢', theme.frame);
+          setLocked(sepRow, stackLeft + stackW - 1, '┤', theme.frame);
         }
 
         const a = document.createElement('a');
@@ -683,11 +669,11 @@
     }
 
     const buttonSepRow = navRow + 1;
-    setLocked(buttonSepRow, stackLeft, '╟', theme.frame);
+    setLocked(buttonSepRow, stackLeft, '├', theme.frame);
     for (let c = 0; c < stackInteriorW; c++) {
       setLocked(buttonSepRow, stackLeft + 1 + c, '─', theme.sep);
     }
-    setLocked(buttonSepRow, stackLeft + stackW - 1, '╢', theme.frame);
+    setLocked(buttonSepRow, stackLeft + stackW - 1, '┤', theme.frame);
 
     const toggleRow = buttonSepRow + 1;
     const toggleStartCol = stackLeft + 1 + Math.floor((stackInteriorW - toggleLabel.length) / 2);
