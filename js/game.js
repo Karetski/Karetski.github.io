@@ -15,7 +15,7 @@
   const INITIAL_SHOTS_PER_DESCENT = 8;
   const MIN_SHOTS_PER_DESCENT     = 2;
   const AIM_LIMIT                 = (75 * Math.PI) / 180;
-  const AIM_DOTS                  = 16;
+  const AIM_REACH_CELLS           = 11;
   const NUM_COLORS                = 3;
   const POP_DURATION_MS           = 520;
   const POINT_BURST_DURATION_MS   = 1200;
@@ -777,24 +777,44 @@
       }
     }
 
-    // Aim line — bullet glyphs in full bubble colour, slides past frame
-    // cells and stops only on bubbles. Skipped while still inside the HUD
-    // vertical band so steep angles don't overwrite HUD interior cells.
+    // Aim line — Braille block glyphs (U+2800–U+28FF) render the ray with
+    // sub-cell precision: each character cell is a 2×4 dot grid, and we OR
+    // in the dot the trajectory passes through, so a slanted aim shows real
+    // diagonal stepping inside cells instead of one centred bullet per cell.
+    // Slides past frame cells and stops only on bubbles. Skipped while still
+    // inside the HUD vertical band so steep angles don't overwrite HUD cells.
     if (!gameOver && shooter.current) {
       const aimColor = M.vividColor(shooter.current.colorIdx);
-      const stepPx = cellH * 0.7;
       const ceilingPx = startSlotRow * cellH;
-      for (let s = 1; s <= AIM_DOTS; s++) {
-        const px = shooterPx + Math.cos(shooter.angle) * stepPx * s;
-        const py = shooterPy + Math.sin(shooter.angle) * stepPx * s;
+      const subW = cellW / 2;
+      const subH = cellH / 4;
+      const sampleStep = Math.min(subW, subH) * 0.5;
+      const maxLen = AIM_REACH_CELLS * cellH;
+      const dx = Math.cos(shooter.angle);
+      const dy = Math.sin(shooter.angle);
+      // Standard Braille bit layout: [sx][sy] where sx∈{0,1}, sy∈{0..3}.
+      const dotBits = [[0x01, 0x02, 0x04, 0x40], [0x08, 0x10, 0x20, 0x80]];
+      const masks = new Map();
+      for (let d = sampleStep; d <= maxLen; d += sampleStep) {
+        const px = shooterPx + dx * d;
+        const py = shooterPy + dy * d;
         if (py < ceilingPx) break;
-        if (py >= dangerY) continue;
         const col = Math.floor(px / cellW);
         const row = Math.floor(py / cellH);
         const k = col + ',' + row;
         if (frameKeys.has(k)) continue;
         if (bubbleKeys.has(k)) break;
-        put(col, row, '•', aimColor);
+        if (py >= dangerY) continue;
+        const sx = Math.min(1, Math.max(0, Math.floor((px - col * cellW) / subW)));
+        const sy = Math.min(3, Math.max(0, Math.floor((py - row * cellH) / subH)));
+        masks.set(k, (masks.get(k) || 0) | dotBits[sx][sy]);
+      }
+      for (const [k, mask] of masks) {
+        if (!mask) continue;
+        const ix = k.indexOf(',');
+        const col = +k.slice(0, ix);
+        const row = +k.slice(ix + 1);
+        put(col, row, String.fromCharCode(0x2800 + mask), aimColor);
       }
     }
 
