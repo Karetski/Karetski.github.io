@@ -60,7 +60,12 @@
   let pointerX = 0, pointerY = 0;
   let lastWritten = new Set();
   let popping = [];
-  let pointBursts = [];
+  // Status row hosts a single burst at a time so messages don't compete for
+  // space or jitter around the panel. Higher-priority events (combo > level >
+  // score) preempt anything still on screen; same- or lower-priority events
+  // wait their turn.
+  const BURST_PRIORITY = { score: 1, level: 2, combo: 3 };
+  let activeBurst = null;
 
   // ---- slot ↔ matrix cell layout ---------------------------------------
   const slotToCell = (i, j) => ({
@@ -122,7 +127,7 @@
     score = 0;
     gameOver = false;
     popping = [];
-    pointBursts = [];
+    activeBurst = null;
   };
 
   const descentRowFill = () =>
@@ -134,10 +139,7 @@
   const advanceLevel = () => {
     level++;
     if (shotsPerDescent > MIN_SHOTS_PER_DESCENT && level % 2 === 0) shotsPerDescent--;
-    if (M && burstSectW > 0) {
-      const bannerCol = burstSectLeft + Math.floor(burstSectW / 2);
-      addPointBurst(bannerCol, lowerInnerRow, '◇ level ' + level, M.titleColor(), 'level');
-    }
+    if (M) addPointBurst('◇ level ' + level, M.titleColor(), 'level');
   };
 
   const descend = () => {
@@ -187,12 +189,19 @@
     return { col: Math.round(sumCol / n), row: Math.round(sumRow / n) };
   };
 
-  const addPointBurst = (col, row, text, color, kind) => {
-    pointBursts.push({
-      col, row, text, color,
-      kind: kind || 'score',
-      tStart: performance.now(),
-    });
+  const burstDuration = (kind) =>
+    kind === 'combo' ? COMBO_BURST_DURATION_MS
+    : kind === 'level' ? LEVEL_BURST_DURATION_MS
+    : POINT_BURST_DURATION_MS;
+
+  const addPointBurst = (text, color, kind) => {
+    kind = kind || 'score';
+    if (activeBurst) {
+      const elapsed = performance.now() - activeBurst.tStart;
+      const stillVisible = elapsed < burstDuration(activeBurst.kind);
+      if (stillVisible && BURST_PRIORITY[kind] < BURST_PRIORITY[activeBurst.kind]) return;
+    }
+    activeBurst = { text, color, kind, tStart: performance.now() };
   };
 
   // ---- layout ----------------------------------------------------------
@@ -310,17 +319,9 @@
       }
       popping.length = w;
     }
-    if (pointBursts.length) {
-      const now = performance.now();
-      let w = 0;
-      for (let r = 0; r < pointBursts.length; r++) {
-        const k = pointBursts[r].kind;
-        const dur = k === 'combo' ? COMBO_BURST_DURATION_MS
-          : k === 'level' ? LEVEL_BURST_DURATION_MS
-          : POINT_BURST_DURATION_MS;
-        if (now - pointBursts[r].tStart < dur) pointBursts[w++] = pointBursts[r];
-      }
-      pointBursts.length = w;
+    if (activeBurst &&
+        performance.now() - activeBurst.tStart >= burstDuration(activeBurst.kind)) {
+      activeBurst = null;
     }
     if (gameOver || !projectile) return;
     projectile.x += projectile.vx * dt;
@@ -358,33 +359,30 @@
       ensureRow(best.j);
       grid[best.j][best.i] = { colorIdx: projectile.colorIdx, char: projectile.char };
 
-      // Wave 1 — direct match (linear run or cluster).
+      // Wave 1 — direct match (linear run or cluster). A combo shot collapses
+      // the per-wave popups into a single banner showing the total earned, so
+      // the points value is never displayed twice.
       const matchCells = collectMatch(best.i, best.j);
       let waves = 0;
       let totalPopped = 0;
-      // All bursts render in the lower status panel's burst section so they
-      // never cover bubbles. A combo shot collapses the per-wave popups into
-      // a single banner showing the total earned, so the points value is
-      // never displayed twice.
-      const popupRow = lowerInnerRow;
-      let lastBurstCol = null, lastBurstColor = null;
+      let lastBurstColor = null;
       let totalEarned = 0;
       if (matchCells.length) {
         const matchPts = matchCells.length + Math.max(0, matchCells.length - 3) * 2;
-        const c = popGroup(matchCells, 'match');
+        popGroup(matchCells, 'match');
         totalEarned += matchPts;
         totalPopped += matchCells.length;
-        if (c) { lastBurstCol = c.col; lastBurstColor = M.titleColor(); }
+        lastBurstColor = M.titleColor();
         waves++;
 
         // Wave 2 — floaters knocked loose by the match.
         const floatCells = collectFloaters();
         if (floatCells.length) {
           const floatPts = floatCells.length * 3;
-          const fc = popGroup(floatCells, 'float');
+          popGroup(floatCells, 'float');
           totalEarned += floatPts;
           totalPopped += floatCells.length;
-          if (fc) { lastBurstCol = fc.col; lastBurstColor = M.linkColor(); }
+          lastBurstColor = M.linkColor();
           waves++;
         }
       }
@@ -394,8 +392,7 @@
         // and ONE score addition for the whole shot.
         totalEarned += totalPopped * 2;
         score += totalEarned;
-        const bannerCol = burstSectLeft + Math.floor(burstSectW / 2);
-        addPointBurst(bannerCol, popupRow, '✦ +' + totalEarned + ' combo', M.titleColor(), 'combo');
+        addPointBurst('✦ +' + totalEarned + ' combo', M.titleColor(), 'combo');
         // Flash the bg around the playfield with the un-dampened (index-page)
         // palette for a beat — duration scales with chain size so big combos
         // hold the celebration longer.
@@ -404,9 +401,7 @@
         }
       } else if (waves === 1) {
         score += totalEarned;
-        if (lastBurstCol !== null) {
-          addPointBurst(lastBurstCol, popupRow, '+' + totalEarned, lastBurstColor);
-        }
+        addPointBurst('+' + totalEarned, lastBurstColor);
       }
     }
     projectile = null;
@@ -519,9 +514,9 @@
     const cells = collectFloaters();
     if (!cells.length) return;
     const pts = cells.length * 3;
-    const c = popGroup(cells, 'float');
+    popGroup(cells, 'float');
     score += pts;
-    if (c) addPointBurst(c.col, lowerInnerRow, '+' + pts, M.linkColor());
+    addPointBurst('+' + pts, M.linkColor());
   };
 
   const checkLose = () => {
@@ -722,72 +717,56 @@
       }
     }
 
-    // Point bursts — score "+N" drifts up + fades out. Combo banners are
-    // intentionally louder: held in place, flashing between title + link
-    // colors, and rendered last so they sit on top of bubbles, the projectile
-    // and even the aim line until they fade.
-    if (pointBursts.length) {
+    // Single status-row burst, always centred in the burst section so the
+    // text never jitters between events. Score "+N" opening-flashes then
+    // fades; combo + level banners hold + colour-flash for the full window.
+    if (activeBurst) {
+      const pb = activeBurst;
+      const dur = burstDuration(pb.kind);
       const now = performance.now();
+      const elapsed = now - pb.tStart;
+      const t = Math.max(0, Math.min(1, elapsed / dur));
       const isLight = M.isLight;
       const bg = isLight ? 255 : 0;
       const titleC = M.titleColor();
       const linkC  = M.linkColor();
-      // Plain text inside the burst section of the lower panel. The level
-      // section is reserved for the persistent "lv N" readout, so bursts
-      // are clamped to the burst section's interior. Score bursts opening-
-      // flash, combo/level banners color-flash, but neither moves.
-      const drawBurstText = (pb, color) => {
-        const text = pb.text;
-        const minCol = burstSectLeft + 1;
-        const maxCol = levelSectLeft - 1;
-        let startCol = pb.col - Math.floor(text.length / 2);
-        if (startCol < minCol) startCol = minCol;
-        if (startCol + text.length - 1 > maxCol) startCol = maxCol - text.length + 1;
-        if (startCol < minCol) startCol = minCol;
-        for (let i = 0; i < text.length; i++) {
-          const col = startCol + i;
-          if (col < minCol || col > maxCol) continue;
-          if (frameKeys.has(col + ',' + pb.row)) continue;
-          put(col, pb.row, text[i], color);
-        }
-      };
 
-      // Score bursts ("+N") — first pass.
-      for (let p = 0; p < pointBursts.length; p++) {
-        const pb = pointBursts[p];
-        if (pb.kind === 'combo') continue;
-        const elapsed = now - pb.tStart;
-        const t = Math.max(0, Math.min(1, elapsed / POINT_BURST_DURATION_MS));
-        let fade;
-        if (t < 0.7) fade = 1;
-        else         fade = Math.max(0, 1 - (t - 0.7) / 0.3);
-        const baseColor = elapsed < 140 ? titleC : pb.color;
-        drawBurstText(pb, blendToBg(baseColor, fade, bg));
-      }
-
-      // Combo + level banners — drawn last so they sit on top of score
-      // bursts. Level banners reuse the held-in-place flashing treatment but
-      // swap the flash colour to the bubble palette so they read as a
-      // distinct event from a combo.
-      for (let p = 0; p < pointBursts.length; p++) {
-        const pb = pointBursts[p];
-        if (pb.kind !== 'combo' && pb.kind !== 'level') continue;
-        const dur = pb.kind === 'level' ? LEVEL_BURST_DURATION_MS : COMBO_BURST_DURATION_MS;
-        const elapsed = now - pb.tStart;
-        const t = Math.max(0, Math.min(1, elapsed / dur));
-        const flashOn  = (Math.floor(elapsed / 90) & 1) === 0;
-        let baseColor;
+      let baseColor, fade;
+      if (pb.kind === 'combo' || pb.kind === 'level') {
+        const flashOn = (Math.floor(elapsed / 90) & 1) === 0;
         if (pb.kind === 'level') {
           const accent = M.vividColor(Math.floor(elapsed / 180) % NUM_COLORS);
           baseColor = flashOn ? titleC : accent;
         } else {
           baseColor = flashOn ? linkC : titleC;
         }
-        let fade;
         if (t < 0.08)      fade = t / 0.08;
         else if (t < 0.7)  fade = 1;
         else               fade = Math.max(0, 1 - (t - 0.7) / 0.3);
-        drawBurstText(pb, blendToBg(baseColor, fade, bg));
+      } else {
+        baseColor = elapsed < 140 ? titleC : pb.color;
+        fade = t < 0.7 ? 1 : Math.max(0, 1 - (t - 0.7) / 0.3);
+      }
+      const color = blendToBg(baseColor, fade, bg);
+
+      // Pad even-length texts with a trailing space so every burst is an
+      // odd-length string. Centring on a discrete grid is exact for odd
+      // lengths but always half a cell off for even ones — without padding,
+      // "+6" would sit half a cell left of "+12" and friends.
+      const text = pb.text.length % 2 === 0 ? pb.text + ' ' : pb.text;
+      const minCol = burstSectLeft + 1;
+      const maxCol = levelSectLeft - 1;
+      const center = (minCol + maxCol) >> 1;
+      let startCol = center - (text.length >> 1);
+      if (startCol < minCol) startCol = minCol;
+      if (startCol + text.length - 1 > maxCol) startCol = maxCol - text.length + 1;
+      if (startCol < minCol) startCol = minCol;
+      for (let i = 0; i < text.length; i++) {
+        const col = startCol + i;
+        if (col < minCol || col > maxCol) continue;
+        if (frameKeys.has(col + ',' + lowerInnerRow)) continue;
+        if (text[i] === ' ') continue;
+        put(col, lowerInnerRow, text[i], color);
       }
     }
 
