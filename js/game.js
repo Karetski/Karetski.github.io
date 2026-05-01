@@ -545,6 +545,7 @@
     }
 
     const frameColor = M.titleColor();
+    const sepColor   = M.sepColor();
     const link       = M.linkColor();
 
     // Popup strip: a fully-enclosed bordered box that mirrors the bottom HUD
@@ -625,14 +626,19 @@
         const col = panelLeft + x;
         put(col, innerRow, ' ', frameColor);
       }
-      // Verticals (outer + section dividers).
-      const verticals = [queueLeft, currentLeft, scoreLeft, totalRight];
-      for (let v = 0; v < verticals.length; v++) {
-        const col = verticals[v];
-        put(col, innerRow, '║', frameColor);
-        frameKeys.add(col + ',' + innerRow);
-      }
-      // T-junctions on the top/bottom rows where dividers meet.
+      // Outer verticals stay frame color; the two section dividers between
+      // queue/current/score render in the dimmer separator color so they
+      // read as internal splits rather than part of the outer frame.
+      put(queueLeft,  innerRow, '║', frameColor);
+      put(totalRight, innerRow, '║', frameColor);
+      put(currentLeft, innerRow, '║', sepColor);
+      put(scoreLeft,   innerRow, '║', sepColor);
+      frameKeys.add(queueLeft   + ',' + innerRow);
+      frameKeys.add(totalRight  + ',' + innerRow);
+      frameKeys.add(currentLeft + ',' + innerRow);
+      frameKeys.add(scoreLeft   + ',' + innerRow);
+      // T-junctions stay frame color so they merge cleanly with the outer
+      // ═ borders; only the interior ║ between them dims.
       put(currentLeft, hudTop,     '╦', frameColor);
       put(currentLeft, hudTop + 2, '╩', frameColor);
       put(scoreLeft,   hudTop,     '╦', frameColor);
