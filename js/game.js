@@ -13,7 +13,7 @@
   const INITIAL_ROWS              = 5;
   const REFILL_ROWS               = 4;
   const INITIAL_SHOTS_PER_DESCENT = 8;
-  const MIN_SHOTS_PER_DESCENT     = 2;
+  const MIN_SHOTS_PER_DESCENT     = 3;
   const AIM_LIMIT                 = (75 * Math.PI) / 180;
   const AIM_REACH_CELLS           = 11;
   const NUM_COLORS                = 3;
@@ -24,8 +24,8 @@
   // Descent rows start sparse at level 1 and approach full density as the
   // level climbs, so increasing pressure shows up both as more frequent
   // descents and denser new rows.
-  const NEW_ROW_FILL_BASE         = 0.78;
-  const NEW_ROW_FILL_PER_LEVEL    = 0.025;
+  const NEW_ROW_FILL_BASE         = 0.72;
+  const NEW_ROW_FILL_PER_LEVEL    = 0.015;
   // Collision threshold in normalised slot-spacings. <1 lets the projectile
   // fully enter a gap between two filled slots before committing; closer to
   // 1 means it snaps as soon as it touches a neighbour. Tune for feel.
@@ -127,7 +127,7 @@
   // it used to. Banner runs through the existing point-burst pipeline.
   const advanceLevel = () => {
     level++;
-    if (shotsPerDescent > MIN_SHOTS_PER_DESCENT) shotsPerDescent--;
+    if (shotsPerDescent > MIN_SHOTS_PER_DESCENT && level % 2 === 0) shotsPerDescent--;
     if (M && slotCols > 0) {
       const bannerCol = startSlotCol + Math.floor(slotCols / 2);
       addPointBurst(bannerCol, 1, '◇ LEVEL ' + level + ' ◇', M.titleColor(), 'level');
