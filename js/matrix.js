@@ -609,7 +609,7 @@
     let totalH, groupTop;
     if (isPlayMode) {
       totalH = buttonFrameH;
-      groupTop = rows - buttonFrameH - 1;
+      groupTop = rows - buttonFrameH;
     } else {
       totalH = titleFrameH + FRAME_GAP + linkFrameH + FRAME_GAP + buttonFrameH;
       groupTop = Math.floor((rows - totalH) / 2);
