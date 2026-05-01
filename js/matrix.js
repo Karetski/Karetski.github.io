@@ -25,13 +25,13 @@
   ];
   const TOGGLE_DARK_LABEL = 'switch to dark';
   const TOGGLE_LIGHT_LABEL = 'switch to light';
-  const NAV_PLAY_LABEL = 'play the game';
+  const NAV_PLAY_LABEL = 'play';
   const NAV_BACK_LABEL = 'back';
   const FRAME_PAD = 1;
   const FRAME_GAP = 1;
   const FRAME_CHARS = {
     tl: '\u2554', tr: '\u2557', bl: '\u255A', br: '\u255D',
-    h: '\u2550', v: '\u2551',
+    h: '\u2550', v: '\u2551'
   };
   const FRAME_BORDER_CHARS = '\u2554\u2557\u255A\u255D\u2551\u2550\u255F\u2562\u2500';
 
@@ -840,7 +840,7 @@
           const vis = fadeActive ? cell.visibility : 1;
           const opacity = qf * vis;
           if (qf < 1 || vis < 1) {
-            const aged = dimToBg(desaturate(cell.color, qf), opacity);
+            const aged = dimToBg(isPlayMode ? desaturate(cell.color, qf) : cell.color, opacity);
             drawColorStr = getColorStr(aged);
           }
         }
