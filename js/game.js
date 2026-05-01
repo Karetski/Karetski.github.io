@@ -13,14 +13,19 @@
   const INITIAL_ROWS              = 5;
   const REFILL_ROWS               = 4;
   const INITIAL_SHOTS_PER_DESCENT = 8;
-  const MIN_SHOTS_PER_DESCENT     = 3;
+  const MIN_SHOTS_PER_DESCENT     = 2;
   const AIM_LIMIT                 = (75 * Math.PI) / 180;
   const AIM_DOTS                  = 16;
   const NUM_COLORS                = 3;
   const POP_DURATION_MS           = 520;
   const POINT_BURST_DURATION_MS   = 1200;
   const COMBO_BURST_DURATION_MS   = 1500;
-  const NEW_ROW_FILL              = 0.85;
+  const LEVEL_BURST_DURATION_MS   = 1500;
+  // Descent rows start sparse at level 1 and approach full density as the
+  // level climbs, so increasing pressure shows up both as more frequent
+  // descents and denser new rows.
+  const NEW_ROW_FILL_BASE         = 0.78;
+  const NEW_ROW_FILL_PER_LEVEL    = 0.025;
   // Collision threshold in normalised slot-spacings. <1 lets the projectile
   // fully enter a gap between two filled slots before committing; closer to
   // 1 means it snaps as soon as it touches a neighbour. Tune for feel.
@@ -43,6 +48,7 @@
   let projectile = null;
   let shotsSinceDescent = 0;
   let shotsPerDescent = INITIAL_SHOTS_PER_DESCENT;
+  let level = 1;
   let score = 0;
   let gameOver = false;
   let pointerX = 0, pointerY = 0;
@@ -106,15 +112,31 @@
     projectile = null;
     shotsSinceDescent = 0;
     shotsPerDescent = INITIAL_SHOTS_PER_DESCENT;
+    level = 1;
     score = 0;
     gameOver = false;
     popping = [];
     pointBursts = [];
   };
 
-  const descend = () => {
-    grid.unshift(randomRow(NEW_ROW_FILL));
+  const descentRowFill = () =>
+    Math.min(1, NEW_ROW_FILL_BASE + (level - 1) * NEW_ROW_FILL_PER_LEVEL);
+
+  // Shared level bump used by both descents and refills, so clearing the
+  // playfield is progression instead of resetting the difficulty knob like
+  // it used to. Banner runs through the existing point-burst pipeline.
+  const advanceLevel = () => {
+    level++;
     if (shotsPerDescent > MIN_SHOTS_PER_DESCENT) shotsPerDescent--;
+    if (M && slotCols > 0) {
+      const bannerCol = startSlotCol + Math.floor(slotCols / 2);
+      addPointBurst(bannerCol, 1, '◇ LEVEL ' + level + ' ◇', M.titleColor(), 'level');
+    }
+  };
+
+  const descend = () => {
+    advanceLevel();
+    grid.unshift(randomRow(descentRowFill()));
     dropFloaters();
   };
 
@@ -126,7 +148,7 @@
     grid = [];
     for (let j = 0; j < REFILL_ROWS; j++) grid.push(randomRow(1));
     shotsSinceDescent = 0;
-    shotsPerDescent = INITIAL_SHOTS_PER_DESCENT;
+    advanceLevel();
     return true;
   };
 
@@ -271,7 +293,10 @@
       const now = performance.now();
       let w = 0;
       for (let r = 0; r < pointBursts.length; r++) {
-        const dur = pointBursts[r].kind === 'combo' ? COMBO_BURST_DURATION_MS : POINT_BURST_DURATION_MS;
+        const k = pointBursts[r].kind;
+        const dur = k === 'combo' ? COMBO_BURST_DURATION_MS
+          : k === 'level' ? LEVEL_BURST_DURATION_MS
+          : POINT_BURST_DURATION_MS;
         if (now - pointBursts[r].tStart < dur) pointBursts[w++] = pointBursts[r];
       }
       pointBursts.length = w;
@@ -553,6 +578,17 @@
       put(popRight, popInner, '║', frameColor);
       frameKeys.add(popLeft  + ',' + popInner);
       frameKeys.add(popRight + ',' + popInner);
+
+      // Persistent level readout, tucked just inside the left vertical so the
+      // box's centred popup space stays free. Active "+N" / combo / level
+      // banners are drawn later in render and overdraw these cells whenever
+      // they reach this side, which is the desired hand-off.
+      const levelStr = 'lv ' + level;
+      for (let i = 0; i < levelStr.length; i++) {
+        const col = popLeft + 2 + i;
+        if (col >= popRight) break;
+        put(col, popInner, levelStr[i], link);
+      }
     }
 
     // HUD: a single bordered strip the same width as the bottom buttons
@@ -706,14 +742,24 @@
         drawBurstText(pb, blendToBg(baseColor, fade, bg));
       }
 
-      // Combo banners — drawn last so they sit on top of score bursts.
+      // Combo + level banners — drawn last so they sit on top of score
+      // bursts. Level banners reuse the held-in-place flashing treatment but
+      // swap the flash colour to the bubble palette so they read as a
+      // distinct event from a combo.
       for (let p = 0; p < pointBursts.length; p++) {
         const pb = pointBursts[p];
-        if (pb.kind !== 'combo') continue;
+        if (pb.kind !== 'combo' && pb.kind !== 'level') continue;
+        const dur = pb.kind === 'level' ? LEVEL_BURST_DURATION_MS : COMBO_BURST_DURATION_MS;
         const elapsed = now - pb.tStart;
-        const t = Math.max(0, Math.min(1, elapsed / COMBO_BURST_DURATION_MS));
+        const t = Math.max(0, Math.min(1, elapsed / dur));
         const flashOn  = (Math.floor(elapsed / 90) & 1) === 0;
-        const baseColor = flashOn ? linkC : titleC;
+        let baseColor;
+        if (pb.kind === 'level') {
+          const accent = M.vividColor(Math.floor(elapsed / 180) % NUM_COLORS);
+          baseColor = flashOn ? titleC : accent;
+        } else {
+          baseColor = flashOn ? linkC : titleC;
+        }
         let fade;
         if (t < 0.08)      fade = t / 0.08;
         else if (t < 0.7)  fade = 1;
