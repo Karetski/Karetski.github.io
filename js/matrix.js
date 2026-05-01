@@ -2,18 +2,21 @@
   // ----- Static config (not exposed to debug panel) ---------------------
   const FONT_PX = 18;
   const LINE_HEIGHT    = 1.0; // tight look
+  // Quantization steps for the per-cell saturation decay. Higher = smoother
+  // fade but more redraws per second.
+  const SAT_LEVELS = 12;
   // One char set per palette slot — order must match paletteDark/paletteLight.
   const CHARSETS = [
     '1234567890@#$%&?=+*/',  // yellow
-    'ｹｻｽｾﾀﾁﾃﾄﾅﾆﾇﾈﾊﾋﾌﾍﾎﾏﾐﾑ',     // purple
-    'abcДEFghkLmЙoЬQrStUвWXyZ',           // pink
+    'ｹｻｽｾﾀﾁﾃﾄﾅﾆﾇﾈﾊﾋﾌﾍﾎﾏﾐﾑ',  // purple
+    'abcEFghkLmoQrStUWXyZ',  // pink
   ];
   const TITLE = 'Alexey Karetski';
   const RIPPLE_RADIUS = 180;
   const TRAIL_TAU = 700;
   const COL_TITLE = [255, 255, 255];
   const COL_FRAME = [255, 255, 255];
-  const FONT_FAMILY = "'JetBrains Mono', 'Noto Sans JP', monospace";
+  const FONT_FAMILY = "'Sometype Mono', monospace";
 
   const LINKS = [
     { label: 'linkedin', href: 'https://www.linkedin.com/in/karetski' },
@@ -48,6 +51,18 @@
     colorNoiseSpeed: 0.18,
     colorBias: 0.25,         // raise to make peaks more distinct (less blended)
     brightnessVar: 0,        // 0 = uniform, 1 = cells can go fully dark
+    // Symbols start vivid on flip and lose saturation toward grayscale until
+    // they flip again. Half-life is in seconds; 0 disables aging entirely.
+    agingHalfLife: 2.5,
+    // Radial visibility falloff for the flipping field — centre dims toward
+    // the theme bg, edges stay bright. Curve is a smoothstep over the full
+    // half-diagonal so the dim region covers most of the screen instead of
+    // hugging the exact centre. 0 = uniform; 1 = centre fully invisible.
+    // Locked cells (title/frame/links) are unaffected.
+    centerFade: 0.85,
+    // Per-cell jitter on the radial distance so the falloff dissolves into
+    // a stipple instead of forming a clean concentric ring.
+    centerFadeNoise: 0.22,
 
     // CRT shader
     chromaticAberration: 0.0035,
@@ -129,7 +144,7 @@
   // (playfield reads lighter than outside). Same rule, opposite visual
   // direction by theme.
   const PLAY_BG_OPACITY_VISIBLE = 0.55;
-  const PLAY_BG_OPACITY_FADED   = 0.1;
+  const PLAY_BG_OPACITY_FADED   = 0.32;
   const desaturate = ([r, g, b], factor) => {
     const gray = 0.299 * r + 0.587 * g + 0.114 * b;
     return [
@@ -138,6 +153,21 @@
       gray + (b - gray) * factor,
     ];
   };
+  // Smoothstep-based radial visibility. distNorm ∈ [0,1] is normalised
+  // distance from screen centre on the half-diagonal; noise ∈ [-1,1] is a
+  // per-cell stipple. centerFade scales how much of the centre dims to bg.
+  const smoothstep01 = (t) => {
+    const x = t < 0 ? 0 : t > 1 ? 1 : t;
+    return x * x * (3 - 2 * x);
+  };
+  const computeVisibility = (distNorm, noise) => {
+    const fade = config.centerFade;
+    if (fade <= 0) return 1;
+    const jittered = distNorm + noise * config.centerFadeNoise;
+    const t = smoothstep01(jittered);
+    return 1 - (1 - t) * fade;
+  };
+
   const dimToBg = (rgb, opacity) => {
     const bg = isLightMode ? 255 : 0;
     return [
@@ -302,6 +332,8 @@
     cell.char = randChar(colorIndex);
     cell.heat = 0;
     cell.dirty = true;
+    cell.flipTime = performance.now();
+    cell.satLevel = SAT_LEVELS;
   };
 
   // ----- Game integration -----------------------------------------------
@@ -354,6 +386,8 @@
         const palette = inPlay ? innerP : outerP;
         cell.color = applyBrightness(palette[cell.colorIndex]);
         cell.colorStr = getColorStr(cell.color);
+        cell.flipTime = performance.now();
+        cell.satLevel = SAT_LEVELS;
         cell.dirty = true;
       }
     },
@@ -382,10 +416,14 @@
     dpr = window.devicePixelRatio || 1;
 
     gctx.font = `${FONT_PX}px ${FONT_FAMILY}`;
+    gctx.textBaseline = 'middle';
     const m = gctx.measureText('M');
     const naturalCellW = m.width;
-    cellW = Math.max(8, Math.round(naturalCellW));
-    cellH = Math.max(10, Math.round(FONT_PX * LINE_HEIGHT));
+    const ink = gctx.measureText('MgyjpqWf|/');
+    const aboveMid = ink.actualBoundingBoxAscent || FONT_PX * 0.5;
+    const belowMid = ink.actualBoundingBoxDescent || FONT_PX * 0.5;
+    cellW = Math.max(8, Math.ceil(naturalCellW));
+    cellH = Math.max(10, Math.ceil(Math.max(FONT_PX * LINE_HEIGHT, 2 * Math.max(aboveMid, belowMid))));
 
     const W = window.innerWidth;
     const H = window.innerHeight;
@@ -408,12 +446,24 @@
 
     const now = performance.now();
     const palette = getPalette();
+    // Pre-compute each cell's normalized distance from screen centre + a
+    // hash-noise jitter, then run a smoothstep to get the radial visibility.
+    // The half-diagonal as maxR makes the gradient cover the whole screen
+    // rather than reaching full intensity inside the short axis.
+    const cx0 = W * 0.5;
+    const cy0 = H * 0.5;
+    const maxR = Math.max(1, Math.hypot(cx0, cy0));
     cells = new Array(cols * rows);
     for (let i = 0; i < cells.length; i++) {
       const r = (i / cols) | 0;
       const c = i - r * cols;
       const colorIndex = sampleColorIndex(c, r, now);
       const color = applyBrightness(palette[colorIndex]);
+      const px = c * cellW + cellW * 0.5;
+      const py = r * cellH + cellH * 0.5;
+      const distNorm = Math.min(1, Math.hypot(px - cx0, py - cy0) / maxR);
+      // Per-cell stipple noise so the falloff doesn't read as a clean ring.
+      const noise = (hash3(c, r, 31) - 0.5) * 2;
       cells[i] = {
         char: randChar(colorIndex),
         locked: false,
@@ -422,6 +472,11 @@
         heat: 0,
         dirty: true,
         colorIndex: colorIndex,
+        flipTime: now,
+        satLevel: SAT_LEVELS,
+        distNorm,
+        fadeNoise: noise,
+        visibility: computeVisibility(distNorm, noise),
       };
     }
 
@@ -660,6 +715,13 @@
     const innerPalette = isPlayMode ? getPalette(true) : outerPalette;
     const theme = getThemeColors();
     const pb = playfieldBounds;
+    // Aging + radial fade run in both modes. In play mode they compose with
+    // the per-palette desat/dim — cells start from the play palette (already
+    // pre-dimmed) and age further toward the theme bg, so the field reads
+    // as sparse twinkles around the playfield rather than a constant haze.
+    const agingActive = config.agingHalfLife > 0;
+    const agingDecay = agingActive ? 1 / (config.agingHalfLife * 1000) : 0;
+    const fadeActive = config.centerFade > 0;
     for (let r = 0; r < rows; r++) {
       const cy = r * cellH;
       const inPlayRow = pb && r >= pb.row && r < pb.row + pb.height;
@@ -685,11 +747,37 @@
               cell.colorStr = getColorStr(cell.color);
             }
             cell.char = randChar(colorIndex);
+            cell.flipTime = now;
+            cell.satLevel = SAT_LEVELS;
           }
         }
         if (cell.heat > 0) {
           cell.heat *= decay;
           if (cell.heat < 0.02) cell.heat = 0;
+        }
+
+        // Compose two opacity terms into a single dimToBg pass: per-cell
+        // saturation aging (vivid on flip, fading toward grayscale/bg with
+        // age) and a static radial visibility (centre cells fade to bg,
+        // edges stay bright). Locked cells (title/frame/links) skip both.
+        let drawColorStr = cell.colorStr;
+        if (!cell.locked) {
+          let qf = 1;
+          if (agingActive) {
+            const factor = Math.pow(0.5, (now - cell.flipTime) * agingDecay);
+            const level = Math.round(factor * SAT_LEVELS);
+            if (level !== cell.satLevel) {
+              cell.satLevel = level;
+              cell.dirty = true;
+            }
+            qf = level / SAT_LEVELS;
+          }
+          const vis = fadeActive ? cell.visibility : 1;
+          const opacity = qf * vis;
+          if (qf < 1 || vis < 1) {
+            const aged = dimToBg(desaturate(cell.color, qf), opacity);
+            drawColorStr = getColorStr(aged);
+          }
         }
 
         if (cell.char === prevChar && !cell.dirty) continue;
@@ -702,7 +790,7 @@
         gctx.clip();
         gctx.fillStyle = theme.bg;
         gctx.fillRect(cx, cy, cellW, cellH);
-        gctx.fillStyle = cell.colorStr;
+        gctx.fillStyle = drawColorStr;
         if (cell.isFrameBorder) {
           gctx.save();
           gctx.translate(cx, cy);
@@ -1113,6 +1201,8 @@
         cell.color = applyBrightness(palette[idx]);
         cell.colorStr = getColorStr(cell.color);
         cell.char = randChar(idx);
+        cell.flipTime = t;
+        cell.satLevel = SAT_LEVELS;
         cell.dirty = true;
       }
     };
@@ -1140,6 +1230,16 @@
     slider('color speed',    'colorNoiseSpeed', 0,    2,   0.05,  onColorChange);
     slider('color bias',     'colorBias',     0,    0.5,  0.01,  onColorChange);
     slider('brightness var', 'brightnessVar', 0,    1,    0.05,  onCellChange);
+    slider('aging half-life','agingHalfLife', 0,    10,   0.1);
+    const onFadeChange = () => {
+      for (let i = 0; i < cells.length; i++) {
+        const cell = cells[i];
+        cell.visibility = computeVisibility(cell.distNorm, cell.fadeNoise);
+        cell.dirty = true;
+      }
+    };
+    slider('center fade',    'centerFade',      0, 1,    0.02, onFadeChange);
+    slider('fade diffusion', 'centerFadeNoise', 0, 0.5,  0.01, onFadeChange);
 
     section('Colors (current theme)');
     const yPick = colorRow('yellow',
@@ -1207,7 +1307,7 @@
   };
 
   if (document.fonts && document.fonts.load) {
-    document.fonts.load(`${FONT_PX}px 'JetBrains Mono'`).then(boot, boot);
+    document.fonts.load(`${FONT_PX}px 'Sometype Mono'`).then(boot, boot);
   } else {
     boot();
   }
