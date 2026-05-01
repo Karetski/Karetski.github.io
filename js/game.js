@@ -37,11 +37,17 @@
   let cols = 0, rows = 0, cellW = 0, cellH = 0;
   let slotCols = 0;                          // bubble columns per row (≡ panelWidth)
   let startSlotCol = 0;
-  let startSlotRow = 1;
+  let startSlotRow = 0;
   let shooterPx = 0, shooterPy = 0;
   let dangerY = 0;
   let projectileSpeed = 0;
   let panelLeft = 0, panelWidth = 0, panelTop = 0;
+  // Lower panel (status row beneath the queue/current/score HUD) layout:
+  // bursts render in the left section, the persistent level readout sits in
+  // the right section. computeLayout fills these in.
+  let lowerInnerRow = 0;
+  let burstSectLeft = 0, burstSectW = 0;
+  let levelSectLeft = 0, levelSectW = 0;
 
   let grid = [];                             // grid[j][i] = null | { colorIdx, char }
   const shooter = { angle: -Math.PI / 2, current: null, next: null };
@@ -128,9 +134,9 @@
   const advanceLevel = () => {
     level++;
     if (shotsPerDescent > MIN_SHOTS_PER_DESCENT && level % 2 === 0) shotsPerDescent--;
-    if (M && slotCols > 0) {
-      const bannerCol = startSlotCol + Math.floor(slotCols / 2);
-      addPointBurst(bannerCol, 1, '◇ LEVEL ' + level + ' ◇', M.titleColor(), 'level');
+    if (M && burstSectW > 0) {
+      const bannerCol = burstSectLeft + Math.floor(burstSectW / 2);
+      addPointBurst(bannerCol, lowerInnerRow, '◇ level ' + level, M.titleColor(), 'level');
     }
   };
 
@@ -200,18 +206,33 @@
     // edge, same right edge, no in-between gaps because slots are 1 cell.
     slotCols     = panelWidth;
     startSlotCol = panelLeft;
-    // Reserve 2 rows above the bubble area: row 1 for popups, row 2 for the
-    // separator line that fences the popup strip off from the playfield.
-    startSlotRow = 3;
+    // Bubbles run flush with the canvas top: HUD + lower status panel sit
+    // beneath the playfield instead of above it.
+    startSlotRow = 0;
 
+    // One merged 5-row panel sitting directly on top of the bottom-button
+    // frame: HUD inner row up top (queue|current|score), shared border with
+    // T-junctions, status inner row below it (burst|level). Shooter sits
+    // inside the HUD's row exactly like before.
     const centreCol  = panelLeft + Math.floor(panelWidth / 2);
-    const hudTop     = panelTop - 4;
+    const hudTop     = panelTop - 5;
     const shooterRow = hudTop + 1;
     shooterPx = centreCol * cellW + cellW / 2;
     shooterPy = shooterRow * cellH + cellH / 2;
     dangerY = hudTop * cellH;
 
     projectileSpeed = (rows * cellH) / 1.0;
+
+    // Status row: bursts in the left section, persistent level readout in
+    // the right section. The status divider is locked to the HUD's score
+    // divider column so the merged panel reads as a single grid — the
+    // shared mid-row gets a clean ╬ junction at that column.
+    const widths = sectionWidths(panelWidth, 3);
+    burstSectLeft = panelLeft;
+    levelSectLeft = panelLeft + widths[0] - 1 + widths[1] - 1;
+    burstSectW    = levelSectLeft - panelLeft + 1;
+    levelSectW    = panelLeft + panelWidth - levelSectLeft;
+    lowerInnerRow = hudTop + 3;
 
     // Tell the matrix to render the playable rectangle's symbol-animation at
     // a higher opacity so the field reads "lit" against the faded outside.
@@ -341,11 +362,11 @@
       const matchCells = collectMatch(best.i, best.j);
       let waves = 0;
       let totalPopped = 0;
-      // All bursts render in the dedicated popup strip above the bubble
-      // area so they never cover bubbles. A combo shot collapses the per-
-      // wave popups into a single banner showing the total earned, so the
-      // points value is never displayed twice.
-      const popupRow = 1;
+      // All bursts render in the lower status panel's burst section so they
+      // never cover bubbles. A combo shot collapses the per-wave popups into
+      // a single banner showing the total earned, so the points value is
+      // never displayed twice.
+      const popupRow = lowerInnerRow;
       let lastBurstCol = null, lastBurstColor = null;
       let totalEarned = 0;
       if (matchCells.length) {
@@ -373,8 +394,8 @@
         // and ONE score addition for the whole shot.
         totalEarned += totalPopped * 2;
         score += totalEarned;
-        const bannerCol = startSlotCol + Math.floor(slotCols / 2);
-        addPointBurst(bannerCol, popupRow, '✦ COMBO +' + totalEarned + ' ✦', M.titleColor(), 'combo');
+        const bannerCol = burstSectLeft + Math.floor(burstSectW / 2);
+        addPointBurst(bannerCol, popupRow, '✦ +' + totalEarned + ' combo', M.titleColor(), 'combo');
       } else if (waves === 1) {
         score += totalEarned;
         if (lastBurstCol !== null) {
@@ -494,7 +515,7 @@
     const pts = cells.length * 3;
     const c = popGroup(cells, 'float');
     score += pts;
-    if (c) addPointBurst(c.col, 1, '+' + pts, M.linkColor());
+    if (c) addPointBurst(c.col, lowerInnerRow, '+' + pts, M.linkColor());
   };
 
   const checkLose = () => {
@@ -548,65 +569,21 @@
     const sepColor   = M.sepColor();
     const link       = M.linkColor();
 
-    // Popup strip: a fully-enclosed bordered box that mirrors the bottom HUD
-    // — same width, same double-line style — so the playfield is bracketed
-    // by matching frames at the top and bottom.
-    {
-      const popTop    = 0;
-      const popInner  = 1;
-      const popBot    = startSlotRow - 1;  // == 2
-      const popLeft   = panelLeft;
-      const popRight  = panelLeft + panelWidth - 1;
-      // Top + bottom borders (corners at outer ends, ═ in between).
-      for (let x = 0; x < panelWidth; x++) {
-        const col = popLeft + x;
-        let topCh = '═', botCh = '═';
-        if (x === 0)                 { topCh = '╔'; botCh = '╚'; }
-        else if (x === panelWidth-1) { topCh = '╗'; botCh = '╝'; }
-        put(col, popTop, topCh, frameColor);
-        put(col, popBot, botCh, frameColor);
-        frameKeys.add(col + ',' + popTop);
-        frameKeys.add(col + ',' + popBot);
-      }
-      // Inner row: blank-fill so flipping bg can't bleed through, then the
-      // side verticals on the outer columns. Popup text sits in the middle
-      // and skips frameKeys so the box is never broken.
-      for (let x = 0; x < panelWidth; x++) {
-        const col = popLeft + x;
-        put(col, popInner, ' ', frameColor);
-      }
-      put(popLeft,  popInner, '║', frameColor);
-      put(popRight, popInner, '║', frameColor);
-      frameKeys.add(popLeft  + ',' + popInner);
-      frameKeys.add(popRight + ',' + popInner);
-
-      // Persistent level readout, centred in the popup strip. Hidden while
-      // any "+N" / combo / level banner is animating so the strip reads as a
-      // single message at a time instead of two competing labels.
-      if (!pointBursts.length) {
-        const levelStr = 'lv ' + level;
-        const center   = popLeft + Math.floor(panelWidth / 2);
-        const startCol = center - Math.floor(levelStr.length / 2);
-        for (let i = 0; i < levelStr.length; i++) {
-          const col = startCol + i;
-          if (col <= popLeft || col >= popRight) continue;
-          put(col, popInner, levelStr[i], link);
-        }
-      }
-    }
-
-    // HUD: a single bordered strip the same width as the bottom buttons
-    // panel, split into queue / current / score by shared T-junction
-    // separators. Every interior cell is locked (with a space if no glyph
-    // sits on it) so the flipping bg never bleeds through the panel.
+    // Bottom HUD: a single bordered 5-row strip the same width as the
+    // buttons panel. Top inner row holds queue|current|score, bottom inner
+    // row holds bursts|level. The shared mid-row carries ╩/╬ junctions
+    // depending on whether each HUD divider continues into the status row.
     if (!gameOver) {
-      const hudTop   = panelTop - 4;
+      const hudTop   = panelTop - 5;
       const innerRow = hudTop + 1;
+      const midRow   = hudTop + 2;
+      const lowerRow = hudTop + 3;
+      const botRow   = hudTop + 4;
       const widths   = sectionWidths(panelWidth, 3);
       const queueW = widths[0], currentW = widths[1], scoreW = widths[2];
       const queueLeft   = panelLeft;
       const currentLeft = queueLeft + queueW - 1;
-      const scoreLeft   = currentLeft + currentW - 1;
+      const scoreLeft   = currentLeft + currentW - 1;  // == levelSectLeft
       const totalRight  = panelLeft + panelWidth - 1;
 
       // Top + bottom borders (corners at outer ends, ═ in between).
@@ -615,20 +592,39 @@
         let topCh = '═', botCh = '═';
         if (x === 0) { topCh = '╔'; botCh = '╚'; }
         else if (x === panelWidth - 1) { topCh = '╗'; botCh = '╝'; }
-        put(col, hudTop,     topCh, frameColor);
-        put(col, hudTop + 2, botCh, frameColor);
+        put(col, hudTop, topCh, frameColor);
+        put(col, botRow, botCh, frameColor);
         frameKeys.add(col + ',' + hudTop);
-        frameKeys.add(col + ',' + (hudTop + 2));
+        frameKeys.add(col + ',' + botRow);
       }
-      // Inner row: blank-fill every interior cell so flipping bg can't
-      // bleed through. Sides + dividers overwrite the appropriate cells.
+      // T-junctions on the top edge: HUD dividers at currentLeft + scoreLeft.
+      // On the bottom edge only the status row's divider (== scoreLeft via
+      // levelSectLeft) surfaces.
+      put(currentLeft, hudTop, '╦', frameColor);
+      put(scoreLeft,   hudTop, '╦', frameColor);
+      put(scoreLeft,   botRow, '╩', frameColor);
+
+      // Mid border: ╠ at left, ╣ at right, ═ across, ╩ where the HUD-only
+      // divider terminates (currentLeft) and ╬ where a divider continues
+      // both directions (scoreLeft / levelSectLeft).
+      for (let x = 0; x < panelWidth; x++) {
+        const col = panelLeft + x;
+        let ch = '═';
+        if (x === 0) ch = '╠';
+        else if (x === panelWidth - 1) ch = '╣';
+        put(col, midRow, ch, frameColor);
+        frameKeys.add(col + ',' + midRow);
+      }
+      put(currentLeft, midRow, '╩', frameColor);
+      put(scoreLeft,   midRow, '╬', frameColor);
+
+      // Inner rows: blank-fill so flipping bg can't bleed through, then
+      // overwrite the side verticals + dividers.
       for (let x = 0; x < panelWidth; x++) {
         const col = panelLeft + x;
         put(col, innerRow, ' ', frameColor);
+        put(col, lowerRow, ' ', frameColor);
       }
-      // Outer verticals stay frame color; the two section dividers between
-      // queue/current/score render in the dimmer separator color so they
-      // read as internal splits rather than part of the outer frame.
       put(queueLeft,  innerRow, '║', frameColor);
       put(totalRight, innerRow, '║', frameColor);
       put(currentLeft, innerRow, '║', sepColor);
@@ -637,14 +633,15 @@
       frameKeys.add(totalRight  + ',' + innerRow);
       frameKeys.add(currentLeft + ',' + innerRow);
       frameKeys.add(scoreLeft   + ',' + innerRow);
-      // T-junctions stay frame color so they merge cleanly with the outer
-      // ═ borders; only the interior ║ between them dims.
-      put(currentLeft, hudTop,     '╦', frameColor);
-      put(currentLeft, hudTop + 2, '╩', frameColor);
-      put(scoreLeft,   hudTop,     '╦', frameColor);
-      put(scoreLeft,   hudTop + 2, '╩', frameColor);
 
-      // Section content.
+      put(panelLeft,  lowerRow, '║', frameColor);
+      put(totalRight, lowerRow, '║', frameColor);
+      put(scoreLeft,  lowerRow, '║', sepColor);
+      frameKeys.add(panelLeft  + ',' + lowerRow);
+      frameKeys.add(totalRight + ',' + lowerRow);
+      frameKeys.add(scoreLeft  + ',' + lowerRow);
+
+      // HUD content.
       const placeCentred = (sectLeft, sectW, char, color) => {
         if (!char) return;
         const cx = sectLeft + Math.floor(sectW / 2);
@@ -663,6 +660,18 @@
         const col = scoreContentLeft + i;
         if (col <= scoreLeft || col >= scoreLeft + scoreW - 1) continue;
         put(col, innerRow, scoreStr[i], link);
+      }
+
+      // Persistent level readout, centred in the right (level) section of
+      // the status row. Always on — bursts only render in the burst section
+      // so the two never collide.
+      const levelStr = 'lv' + level;
+      const lvCenter = levelSectLeft + Math.floor(levelSectW / 2);
+      const lvStart  = lvCenter - Math.floor(levelStr.length / 2);
+      for (let i = 0; i < levelStr.length; i++) {
+        const col = lvStart + i;
+        if (col <= levelSectLeft || col >= totalRight) continue;
+        put(col, lowerRow, levelStr[i], link);
       }
     }
 
@@ -717,22 +726,21 @@
       const bg = isLight ? 255 : 0;
       const titleC = M.titleColor();
       const linkC  = M.linkColor();
-      // Plain text on the popup row — no per-burst border now that the
-      // separator line fences the strip off from the bubble area. Score
-      // bursts opening-flash, combo banners color-flash, but neither moves.
+      // Plain text inside the burst section of the lower panel. The level
+      // section is reserved for the persistent "lv N" readout, so bursts
+      // are clamped to the burst section's interior. Score bursts opening-
+      // flash, combo/level banners color-flash, but neither moves.
       const drawBurstText = (pb, color) => {
         const text = pb.text;
-        // Clamp the text so it always sits inside the popup box's side
-        // verticals — otherwise a "+N" anchored at the left edge would have
-        // its "+" silently swallowed by the border via the frameKeys skip.
-        const minCol = panelLeft + 1;
-        const maxCol = panelLeft + panelWidth - 2;
+        const minCol = burstSectLeft + 1;
+        const maxCol = levelSectLeft - 1;
         let startCol = pb.col - Math.floor(text.length / 2);
         if (startCol < minCol) startCol = minCol;
         if (startCol + text.length - 1 > maxCol) startCol = maxCol - text.length + 1;
+        if (startCol < minCol) startCol = minCol;
         for (let i = 0; i < text.length; i++) {
           const col = startCol + i;
-          if (col < 0 || col >= cols) continue;
+          if (col < minCol || col > maxCol) continue;
           if (frameKeys.has(col + ',' + pb.row)) continue;
           put(col, pb.row, text[i], color);
         }

@@ -27,7 +27,7 @@
   const TOGGLE_LIGHT_LABEL = 'switch to light';
   const NAV_PLAY_LABEL = 'play';
   const NAV_BACK_LABEL = 'back';
-  const FRAME_PAD = 1;
+  const FRAME_PAD = 4;
   const FRAME_GAP = 1;
   const FRAME_CHARS = {
     tl: '\u2554', tr: '\u2557', bl: '\u255A', br: '\u255D',
@@ -307,7 +307,7 @@
     // Box-drawing chars route through drawBoxChar so the borders are
     // pixel-perfect across font fallbacks. Covers the panel frames here in
     // matrix.js plus the HUD/popup frames the game writes through setCell.
-    cell.isFrameBorder = '\u2554\u2557\u255A\u255D\u2551\u2550\u2560\u2563\u2566\u2569'.indexOf(ch) >= 0;
+    cell.isFrameBorder = '\u2554\u2557\u255A\u255D\u2551\u2550\u2560\u2563\u2566\u2569\u256C'.indexOf(ch) >= 0;
     cell.dirty = true;
   };
   // Returns a previously-locked cell to the flipping background, picking a
@@ -487,6 +487,19 @@
         hRow(yC - 1, xC + 2, xR);
         vCol(xC - 1, yT, yC);
         vCol(xC + 1, yT, yC);
+        break;
+      case '╬':
+        // Double-line 4-way cross: each arm's strokes break at the central
+        // 3×3 region so opposing arms don't pile ink at the centre — that
+        // pile-up is what made the font glyph read heavier than its peers.
+        hRow(yC - 1, xL, xC - 1);
+        hRow(yC - 1, xC + 2, xR);
+        hRow(yC + 1, xL, xC - 1);
+        hRow(yC + 1, xC + 2, xR);
+        vCol(xC - 1, yT, yC - 1);
+        vCol(xC - 1, yC + 2, yB);
+        vCol(xC + 1, yT, yC - 1);
+        vCol(xC + 1, yC + 2, yB);
         break;
     }
   };
