@@ -21,6 +21,10 @@
   const POINT_BURST_DURATION_MS   = 1200;
   const COMBO_BURST_DURATION_MS   = 1500;
   const NEW_ROW_FILL              = 0.85;
+  // Collision threshold in normalised slot-spacings. <1 lets the projectile
+  // fully enter a gap between two filled slots before committing; closer to
+  // 1 means it snaps as soon as it touches a neighbour. Tune for feel.
+  const COLLISION_R               = 0.85;
 
   const NEIGHBORS = [[-1, 0], [1, 0], [0, -1], [0, 1]];
 
@@ -55,13 +59,6 @@
     const c = slotToCell(i, j);
     return { x: c.col * cellW + cellW / 2, y: c.row * cellH + cellH / 2 };
   };
-  const cellToSlot = (col, row) => {
-    const j = row - startSlotRow;
-    const i = col - startSlotCol;
-    if (j < 0 || i < 0 || i >= slotCols) return null;
-    return { i, j };
-  };
-
   const neighborsOf = (i, j) => {
     const out = [];
     for (let k = 0; k < NEIGHBORS.length; k++) {
@@ -233,15 +230,30 @@
   const wallMinX = () => startSlotCol * cellW;
   const wallMaxX = () => (startSlotCol + slotCols) * cellW;
 
-  const collisionAt = (projCol, projRow) => {
-    if (projRow < startSlotRow) return true;
-    const slot = cellToSlot(projCol, projRow);
-    if (!slot) return false;
-    if (grid[slot.j] && grid[slot.j][slot.i]) return true;
-    const ns = neighborsOf(slot.i, slot.j);
-    for (let k = 0; k < ns.length; k++) {
-      const nj = ns[k][1], ni = ns[k][0];
-      if (grid[nj] && grid[nj][ni]) return true;
+  const collisionAt = () => {
+    // Ceiling — projectile centre has crossed the top of the playfield.
+    if (projectile.y < startSlotRow * cellH) return true;
+
+    // Distance check against nearby occupied slots. The grid is non-square
+    // (cellW ≠ cellH), so normalise by cell size to keep the threshold
+    // isotropic in slot-space — same metric snapAndResolve uses to pick a
+    // landing slot.
+    const tj = Math.max(0, Math.round((projectile.y / cellH) - startSlotRow));
+    const ti = Math.max(0, Math.min(slotCols - 1,
+      Math.round((projectile.x / cellW) - startSlotCol)));
+    const r2 = COLLISION_R * COLLISION_R;
+    for (let j = Math.max(0, tj - 1); j <= tj + 1; j++) {
+      const row = grid[j];
+      if (!row) continue;
+      const iLo = Math.max(0, ti - 1);
+      const iHi = Math.min(slotCols - 1, ti + 1);
+      for (let i = iLo; i <= iHi; i++) {
+        if (!row[i]) continue;
+        const p = slotToPixel(i, j);
+        const dx = (projectile.x - p.x) / cellW;
+        const dy = (projectile.y - p.y) / cellH;
+        if (dx * dx + dy * dy < r2) return true;
+      }
     }
     return false;
   };
@@ -275,9 +287,7 @@
       projectile.x = wallMaxX() - halfW;
       projectile.vx = -projectile.vx;
     }
-    const projCol = Math.floor(projectile.x / cellW);
-    const projRow = Math.floor(projectile.y / cellH);
-    if (collisionAt(projCol, projRow)) {
+    if (collisionAt()) {
       snapAndResolve();
     } else if (projectile.y > rows * cellH + cellH) {
       projectile = null;
