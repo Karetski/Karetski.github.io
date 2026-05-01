@@ -78,19 +78,19 @@
 
     // Palette (3 anchors per theme; cells pick one randomly)
     paletteDark: [
-      [255, 255, 0],         // yellow
-      [180, 50, 220],        // purple
-      [255, 0, 128],         // pink
+      [255, 215, 0],         // yellow  — hue 51°, slight golden shift drops luminance
+      [150, 0, 245],         // purple  — hue 277°, true violet, max chroma
+      [255, 25, 95],         // pink    — hue 344°, hint of G to match perceived weight
     ],
     paletteLight: [
-      [200, 175, 0],
-      [130, 25, 180],
-      [210, 0, 110],
+      [215, 180, 0],
+      [110, 0, 210],
+      [225, 15, 80],
     ],
 
     // Link color per theme
-    linkDark: [100, 130, 255],
-    linkLight: [0, 0, 255],
+    linkDark: [70, 130, 255],
+    linkLight: [0, 0, 230],
   };
   const config = JSON.parse(JSON.stringify(defaultConfig));
   if (document.body.dataset.page === 'play') {
@@ -1207,7 +1207,7 @@
       input.max = String(max);
       input.step = String(step);
       input.value = String(config[key]);
-      input.style.cssText = 'width: 100%; accent-color: #ff0080;';
+      input.style.cssText = 'width: 100%; accent-color: #ff195f;';
       input.oninput = () => {
         const v = parseFloat(input.value);
         config[key] = v;
@@ -1357,7 +1357,7 @@
     body.appendChild(buttonRow);
 
     document.body.appendChild(panel);
-    console.info('%cdebug panel available — call debug() to toggle, debug.show() / debug.hide()', 'color: #ff0080');
+    console.info('%cdebug panel available — call debug() to toggle, debug.show() / debug.hide()', 'color: #ff195f');
   };
 
   // ----- Boot -----------------------------------------------------------
