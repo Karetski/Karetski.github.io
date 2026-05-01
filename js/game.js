@@ -827,7 +827,14 @@
   };
 
   // ---- pointer ---------------------------------------------------------
+  // Mouse: hover updates the aim, click fires. Touch has no hover, so a tap
+  // would otherwise fire blindly — instead we treat touch as drag-to-aim,
+  // release-to-fire so the player can see the aim line before committing.
+  let dragging = false;
+  const isTouchLike = (e) => e.pointerType !== 'mouse';
+
   const onPointerMove = (e) => {
+    if (isTouchLike(e) && !dragging) return;
     pointerX = e.clientX;
     pointerY = e.clientY;
   };
@@ -835,8 +842,23 @@
     if (e.target && e.target.closest && e.target.closest('a, button')) return;
     pointerX = e.clientX;
     pointerY = e.clientY;
+    if (isTouchLike(e)) {
+      dragging = true;
+      return;
+    }
     if (gameOver) reset();
     else fire();
+  };
+  const onPointerUp = (e) => {
+    if (!isTouchLike(e) || !dragging) return;
+    dragging = false;
+    pointerX = e.clientX;
+    pointerY = e.clientY;
+    if (gameOver) reset();
+    else fire();
+  };
+  const onPointerCancel = () => {
+    dragging = false;
   };
 
   // ---- bootstrap -------------------------------------------------------
@@ -878,6 +900,8 @@
     });
     window.addEventListener('pointermove', onPointerMove);
     window.addEventListener('pointerdown', onPointerDown);
+    window.addEventListener('pointerup', onPointerUp);
+    window.addEventListener('pointercancel', onPointerCancel);
     requestAnimationFrame(loop);
   };
   start();
