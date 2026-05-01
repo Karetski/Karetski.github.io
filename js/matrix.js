@@ -77,15 +77,18 @@
     breathe: 0,              // 0..0.2 amplitude of slow brightness wave
 
     // Palette (3 anchors per theme; cells pick one randomly)
+    // Tuned to match yellow's neon punch — purple and pink lifted to max
+    // luminance with one channel pinned at 255 so all three read equally
+    // vibrant rather than pulling purple/pink into low-luminance territory.
     paletteDark: [
-      [255, 215, 0],         // yellow  — hue 51°, slight golden shift drops luminance
-      [150, 0, 245],         // purple  — hue 277°, true violet, max chroma
-      [255, 25, 95],         // pink    — hue 344°, hint of G to match perceived weight
+      [255, 215, 0],         // yellow  — hue 51°, full neon
+      [210, 55, 255],        // purple  — hue 282°, electric violet at max V
+      [255, 35, 120],        // pink    — hue 337°, saturated neon hot-pink
     ],
     paletteLight: [
       [215, 180, 0],
-      [110, 0, 210],
-      [225, 15, 80],
+      [150, 35, 220],
+      [225, 20, 95],
     ],
 
     // Link color per theme
