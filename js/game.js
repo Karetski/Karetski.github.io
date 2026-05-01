@@ -579,15 +579,18 @@
       frameKeys.add(popLeft  + ',' + popInner);
       frameKeys.add(popRight + ',' + popInner);
 
-      // Persistent level readout, tucked just inside the left vertical so the
-      // box's centred popup space stays free. Active "+N" / combo / level
-      // banners are drawn later in render and overdraw these cells whenever
-      // they reach this side, which is the desired hand-off.
-      const levelStr = 'lv ' + level;
-      for (let i = 0; i < levelStr.length; i++) {
-        const col = popLeft + 2 + i;
-        if (col >= popRight) break;
-        put(col, popInner, levelStr[i], link);
+      // Persistent level readout, centred in the popup strip. Hidden while
+      // any "+N" / combo / level banner is animating so the strip reads as a
+      // single message at a time instead of two competing labels.
+      if (!pointBursts.length) {
+        const levelStr = 'lv ' + level;
+        const center   = popLeft + Math.floor(panelWidth / 2);
+        const startCol = center - Math.floor(levelStr.length / 2);
+        for (let i = 0; i < levelStr.length; i++) {
+          const col = startCol + i;
+          if (col <= popLeft || col >= popRight) continue;
+          put(col, popInner, levelStr[i], link);
+        }
       }
     }
 
