@@ -2,7 +2,7 @@ import { AIM_REACH_CELLS, NUM_COLORS, POP_DURATION_MS } from './constants';
 import { state, requireM } from './state';
 import { sectionWidths } from './layout';
 import { burstDuration } from './bursts';
-import { blendToBg } from '../shared/math';
+import { blendToBg } from '../../shared/math';
 
 const slotToCell = (i: number, j: number) => ({
   col: state.startSlotCol + i,

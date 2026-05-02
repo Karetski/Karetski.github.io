@@ -1,4 +1,4 @@
-import type { MatrixGame } from '../shared/types';
+import type { MatrixGame } from '../../shared/types';
 import { state } from './state';
 import { computeLayout } from './layout';
 import { reset } from './bubbles';
