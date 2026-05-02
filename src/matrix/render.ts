@@ -8,6 +8,7 @@ import { drawBoxChar } from './box-chars';
 import { stepPointer } from './pointer';
 import { desaturate, dimToBg } from '../shared/math';
 import { consumeFlashRenderParams, type FlashRenderParams } from './flash';
+import { seedFlip } from './seed-flip';
 
 interface ComposeArgs {
   cell: Cell;
@@ -116,8 +117,7 @@ export const updateAndDrawGrid = (gctx: CanvasRenderingContext2D, now: number): 
             cell.colorStr = getColorStr(cell.color);
           }
           cell.char = randChar(colorIndex);
-          cell.flipTime = now;
-          cell.satLevel = SAT_LEVELS;
+          seedFlip(cell, c, r, now, 'random');
         }
       }
       if (cell.heat > 0) {

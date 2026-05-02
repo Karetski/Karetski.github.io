@@ -5,6 +5,7 @@ import { sampleColorIndex } from './noise';
 import { computeVisibility } from './cells';
 import { getThemeColors } from './theme';
 import { hash3 } from '../shared/math';
+import { seedFlip } from './seed-flip';
 import type { CRTPipeline } from './crt';
 
 export interface GridMetrics {
@@ -64,7 +65,7 @@ export const initGrid = (crt: CRTPipeline): GridMetrics => {
     const py = r * state.cellH + state.cellH * 0.5;
     const distNorm = Math.min(1, Math.hypot(px - cx0, py - cy0) / maxR);
     const noise = (hash3(c, r, 31) - 0.5) * 2;
-    cells[i] = {
+    const cell: Cell = {
       char: randChar(colorIndex),
       locked: false,
       color,
@@ -78,6 +79,8 @@ export const initGrid = (crt: CRTPipeline): GridMetrics => {
       fadeNoise: noise,
       visibility: computeVisibility(distNorm, noise),
     };
+    seedFlip(cell, c, r, now, 'aged');
+    cells[i] = cell;
   }
   state.cells = cells;
 

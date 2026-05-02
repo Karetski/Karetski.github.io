@@ -1,9 +1,10 @@
-import { FRAME_BORDER_CHARS, SAT_LEVELS } from './constants';
+import { FRAME_BORDER_CHARS } from './constants';
 import { state, type Cell } from './state';
 import { applyBrightness, getColorStr, getPalette, randChar } from './palette';
 import { sampleColorIndex } from './noise';
 import { smoothstep01 } from '../shared/math';
 import { isInPlayfield } from './playfield';
+import { seedFlip } from './seed-flip';
 
 // Smoothstep-based radial visibility. distNorm ∈ [0,1] is normalised
 // distance from screen centre on the half-diagonal; noise ∈ [-1,1] is a
@@ -56,7 +57,6 @@ export const setUnlocked = (r: number, c: number): void => {
   cell.char = randChar(colorIndex);
   cell.heat = 0;
   cell.dirty = true;
-  cell.flipTime = performance.now();
-  cell.satLevel = SAT_LEVELS;
+  seedFlip(cell, c, r, performance.now(), 'random');
 };
 
