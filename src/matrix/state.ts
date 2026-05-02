@@ -49,7 +49,6 @@ const isPlayMode = document.body.dataset['page'] === 'play';
 const config = cloneConfig(defaultConfig);
 if (isPlayMode) {
   // Calm the field down so the game reads as the foreground action.
-  config.flipRate = 0.05;
   config.noiseSpeed = 0.2;
   config.colorNoiseSpeed = 0.06;
   config.flipVariation = 0.2;

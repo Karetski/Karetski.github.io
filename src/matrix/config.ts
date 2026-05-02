@@ -31,7 +31,7 @@ export interface MatrixConfig {
 }
 
 export const defaultConfig: MatrixConfig = {
-  flipRate: 0.2,
+  flipRate: 0.025,
   flipVariation: 0.35,
   noiseScale: 0.18,
   noiseSpeed: 0.6,
