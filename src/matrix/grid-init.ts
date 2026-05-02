@@ -38,6 +38,8 @@ export const initGrid = (crt: CRTPipeline): GridMetrics => {
   screenCanvas.style.width = W + 'px';
   screenCanvas.style.height = H + 'px';
 
+  // Resizing a canvas clears its 2D-context state, so font/baseline must be
+  // restored before the bg fill (and before any text measurement done later).
   gctx.font = `${FONT_PX}px ${FONT_FAMILY}`;
   gctx.textBaseline = 'middle';
   const theme = getThemeColors();
