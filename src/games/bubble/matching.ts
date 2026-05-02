@@ -1,46 +1,62 @@
 import { NEIGHBORS, POP_DURATION_MS, type PopKind } from './constants';
-import { state, requireM } from './state';
+import { type GameGrid, type GameState, requireM } from './state';
 import { addPointBurst } from './bursts';
 
-const slotToCell = (i: number, j: number) => ({
+const slotToCell = (state: GameState, i: number, j: number) => ({
   col: state.startSlotCol + i,
   row: state.startSlotRow + j,
 });
 
-const neighborsOf = (i: number, j: number): Array<[number, number]> => {
+const neighborsOf = (
+  grid: GameGrid,
+  slotCols: number,
+  i: number,
+  j: number,
+): Array<[number, number]> => {
   const out: Array<[number, number]> = [];
   for (let k = 0; k < NEIGHBORS.length; k++) {
     const [dx, dy] = NEIGHBORS[k]!;
     const ni = i + dx, nj = j + dy;
-    if (nj >= 0 && nj < state.grid.length && ni >= 0 && ni < state.slotCols) out.push([ni, nj]);
+    if (nj >= 0 && nj < grid.length && ni >= 0 && ni < slotCols) out.push([ni, nj]);
   }
   return out;
 };
 
 // popCell only animates + clears the slot. Scoring is awarded per wave by the
 // caller so we can show "+N" bursts and combo bonuses cohesively.
-export const popCell = (i: number, j: number, kind: PopKind): { col: number; row: number } | null => {
+export const popCell = (
+  state: GameState,
+  i: number,
+  j: number,
+  kind: PopKind,
+  now: number = performance.now(),
+): { col: number; row: number } | null => {
   const row = state.grid[j];
   if (!row) return null;
   const cell = row[i];
   if (!cell) return null;
-  const c = slotToCell(i, j);
+  const c = slotToCell(state, i, j);
   state.popping.push({
     col: c.col,
     row: c.row,
     char: cell.char,
     colorIdx: cell.colorIdx,
     kind,
-    tStart: performance.now(),
+    tStart: now,
   });
   row[i] = null;
   return c;
 };
 
-export const popGroup = (cells: ReadonlyArray<readonly [number, number]>, kind: PopKind): { col: number; row: number } | null => {
+export const popGroup = (
+  state: GameState,
+  cells: ReadonlyArray<readonly [number, number]>,
+  kind: PopKind,
+  now: number = performance.now(),
+): { col: number; row: number } | null => {
   let sumCol = 0, sumRow = 0, n = 0;
   for (let k = 0; k < cells.length; k++) {
-    const p = popCell(cells[k]![0], cells[k]![1], kind);
+    const p = popCell(state, cells[k]![0], cells[k]![1], kind, now);
     if (p) { sumCol += p.col; sumRow += p.row; n++; }
   }
   if (!n) return null;
@@ -49,8 +65,13 @@ export const popGroup = (cells: ReadonlyArray<readonly [number, number]>, kind: 
 
 // Returns [[i, j], ...] of cells that should pop (linear-run + cluster
 // rules), without mutating the grid.
-export const collectMatch = (i: number, j: number): Array<[number, number]> => {
-  const cell = state.grid[j]?.[i];
+export const collectMatch = (
+  grid: GameGrid,
+  slotCols: number,
+  i: number,
+  j: number,
+): Array<[number, number]> => {
+  const cell = grid[j]?.[i];
   if (!cell) return [];
   const targetColor = cell.colorIdx;
   const targetChar  = cell.char;
@@ -63,14 +84,14 @@ export const collectMatch = (i: number, j: number): Array<[number, number]> => {
   const addRun = (di: number, dj: number) => {
     const run: Array<[number, number]> = [[i, j]];
     let ci = i + di, cj = j + dj;
-    while (cj >= 0 && cj < state.grid.length && ci >= 0 && ci < state.slotCols
-           && state.grid[cj]![ci] && state.grid[cj]![ci]!.char === targetChar) {
+    while (cj >= 0 && cj < grid.length && ci >= 0 && ci < slotCols
+           && grid[cj]![ci] && grid[cj]![ci]!.char === targetChar) {
       run.push([ci, cj]);
       ci += di; cj += dj;
     }
     ci = i - di; cj = j - dj;
-    while (cj >= 0 && cj < state.grid.length && ci >= 0 && ci < state.slotCols
-           && state.grid[cj]![ci] && state.grid[cj]![ci]!.char === targetChar) {
+    while (cj >= 0 && cj < grid.length && ci >= 0 && ci < slotCols
+           && grid[cj]![ci] && grid[cj]![ci]!.char === targetChar) {
       run.push([ci, cj]);
       ci -= di; cj -= dj;
     }
@@ -89,14 +110,14 @@ export const collectMatch = (i: number, j: number): Array<[number, number]> => {
   const cluster: Array<[number, number]> = [];
   while (stack.length) {
     const [ci, cj] = stack.pop()!;
-    const cur = state.grid[cj]?.[ci];
+    const cur = grid[cj]?.[ci];
     if (!cur || cur.colorIdx !== targetColor) continue;
     cluster.push([ci, cj]);
-    const ns = neighborsOf(ci, cj);
+    const ns = neighborsOf(grid, slotCols, ci, cj);
     for (let k = 0; k < ns.length; k++) {
       const [ni, nj] = ns[k]!;
       const key = ni + ',' + nj;
-      const target2 = state.grid[nj]?.[ni];
+      const target2 = grid[nj]?.[ni];
       if (!seen.has(key) && target2 && target2.colorIdx === targetColor) {
         seen.add(key);
         stack.push([ni, nj]);
@@ -117,29 +138,32 @@ export const collectMatch = (i: number, j: number): Array<[number, number]> => {
 };
 
 // Returns [[i, j], ...] of bubbles disconnected from the ceiling row.
-export const collectFloaters = (): Array<[number, number]> => {
-  if (!state.grid.length || !state.grid[0]) return [];
+export const collectFloaters = (
+  grid: GameGrid,
+  slotCols: number,
+): Array<[number, number]> => {
+  if (!grid.length || !grid[0]) return [];
   const reachable = new Set<string>();
   const stack: Array<[number, number]> = [];
-  for (let i = 0; i < state.slotCols; i++) {
-    if (state.grid[0]![i]) { reachable.add(i + ',0'); stack.push([i, 0]); }
+  for (let i = 0; i < slotCols; i++) {
+    if (grid[0]![i]) { reachable.add(i + ',0'); stack.push([i, 0]); }
   }
   while (stack.length) {
     const [ci, cj] = stack.pop()!;
-    const ns = neighborsOf(ci, cj);
+    const ns = neighborsOf(grid, slotCols, ci, cj);
     for (let k = 0; k < ns.length; k++) {
       const [ni, nj] = ns[k]!;
       const key = ni + ',' + nj;
-      if (!reachable.has(key) && state.grid[nj]?.[ni]) {
+      if (!reachable.has(key) && grid[nj]?.[ni]) {
         reachable.add(key);
         stack.push([ni, nj]);
       }
     }
   }
   const out: Array<[number, number]> = [];
-  for (let j = 0; j < state.grid.length; j++) {
-    for (let i = 0; i < state.slotCols; i++) {
-      if (state.grid[j]![i] && !reachable.has(i + ',' + j)) out.push([i, j]);
+  for (let j = 0; j < grid.length; j++) {
+    for (let i = 0; i < slotCols; i++) {
+      if (grid[j]![i] && !reachable.has(i + ',' + j)) out.push([i, j]);
     }
   }
   return out;
@@ -147,33 +171,43 @@ export const collectFloaters = (): Array<[number, number]> => {
 
 // Standalone floater drop used by descend(): pops, scores and emits a burst,
 // but doesn't participate in combo accounting (descents aren't shot-driven).
-export const dropFloaters = (): void => {
-  const cells = collectFloaters();
+export const dropFloaters = (state: GameState): void => {
+  const cells = collectFloaters(state.grid, state.slotCols);
   if (!cells.length) return;
   const pts = cells.length * 3;
-  popGroup(cells, 'float');
+  popGroup(state, cells, 'float');
   state.score += pts;
   addPointBurst(state, '+' + pts, requireM().linkColor());
 };
 
-export const checkLose = (): void => {
-  if (state.gameOver) return;
-  for (let j = 0; j < state.grid.length; j++) {
-    for (let i = 0; i < state.slotCols; i++) {
-      if (state.grid[j]![i]) {
-        const py = (state.startSlotRow + j) * state.cellH + state.cellH / 2;
-        if (py > state.dangerY) {
-          state.gameOver = true;
-          return;
-        }
+// Pure: returns true if any bubble's centre y crosses dangerY.
+export const isLose = (
+  grid: GameGrid,
+  slotCols: number,
+  startSlotRow: number,
+  dangerY: number,
+  cellH: number,
+): boolean => {
+  for (let j = 0; j < grid.length; j++) {
+    for (let i = 0; i < slotCols; i++) {
+      if (grid[j]![i]) {
+        const py = (startSlotRow + j) * cellH + cellH / 2;
+        if (py > dangerY) return true;
       }
     }
   }
+  return false;
 };
 
-export const tickPops = (): void => {
+export const checkLose = (state: GameState): void => {
+  if (state.gameOver) return;
+  if (isLose(state.grid, state.slotCols, state.startSlotRow, state.dangerY, state.cellH)) {
+    state.gameOver = true;
+  }
+};
+
+export const tickPops = (state: GameState, now: number = performance.now()): void => {
   if (!state.popping.length) return;
-  const now = performance.now();
   let w = 0;
   for (let r = 0; r < state.popping.length; r++) {
     if (now - state.popping[r]!.tStart < POP_DURATION_MS) state.popping[w++] = state.popping[r]!;

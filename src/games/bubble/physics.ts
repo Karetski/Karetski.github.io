@@ -90,24 +90,24 @@ const snapAndResolve = (): void => {
     // Wave 1 — direct match (linear run or cluster). A combo shot collapses
     // the per-wave popups into a single banner showing the total earned, so
     // the points value is never displayed twice.
-    const matchCells = collectMatch(best.i, best.j);
+    const matchCells = collectMatch(state.grid, state.slotCols, best.i, best.j);
     let waves = 0;
     let totalPopped = 0;
     let lastBurstColor: number[] | readonly number[] | null = null;
     let totalEarned = 0;
     if (matchCells.length) {
       const matchPts = matchCells.length + Math.max(0, matchCells.length - 3) * 2;
-      popGroup(matchCells, 'match');
+      popGroup(state, matchCells, 'match');
       totalEarned += matchPts;
       totalPopped += matchCells.length;
       lastBurstColor = M.titleColor();
       waves++;
 
       // Wave 2 — floaters knocked loose by the match.
-      const floatCells = collectFloaters();
+      const floatCells = collectFloaters(state.grid, state.slotCols);
       if (floatCells.length) {
         const floatPts = floatCells.length * 3;
-        popGroup(floatCells, 'float');
+        popGroup(state, floatCells, 'float');
         totalEarned += floatPts;
         totalPopped += floatCells.length;
         lastBurstColor = M.linkColor();
@@ -140,7 +140,7 @@ const snapAndResolve = (): void => {
 };
 
 export const tick = (dt: number): void => {
-  tickPops();
+  tickPops(state);
   tickBurst(state);
   if (state.gameOver || !state.projectile) return;
   state.projectile.x += state.projectile.vx * dt;

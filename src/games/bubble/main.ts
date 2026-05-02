@@ -42,7 +42,7 @@ const start = (matrix: MatrixGame): void => {
       lastT = now;
       updateAim();
       tick(dt);
-      checkLose();
+      checkLose(state);
       render();
       requestAnimationFrame(loop);
     };

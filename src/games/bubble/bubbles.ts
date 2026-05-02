@@ -66,7 +66,7 @@ const advanceLevel = (): void => {
 export const descend = (): void => {
   advanceLevel();
   state.grid.unshift(randomRow(descentRowFill()));
-  dropFloaters();
+  dropFloaters(state);
 };
 
 export const refillIfEmpty = (): boolean => {
