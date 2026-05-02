@@ -8,11 +8,11 @@ import { state, emit, writeStoredTheme } from './state';
 import { resetColorCache } from './palette';
 import type { CRTPipeline } from './crt';
 import { initGrid } from './grid-init';
-import { composePanelFrames } from './panel-frame';
+import { applyPanelFrames } from './panel-frame';
 
 export const setupGrid = (crt: CRTPipeline): void => {
   const { W, H, naturalCellW } = initGrid(crt);
-  const panel = composePanelFrames(W, H);
+  const panel = applyPanelFrames(W, H);
 
   const titleEl = document.getElementById('title')!;
   const linksEl = document.getElementById('links')!;
@@ -29,8 +29,10 @@ export const setupGrid = (crt: CRTPipeline): void => {
     titleEl.style.font = `${FONT_PX}px ${FONT_FAMILY}`;
     titleEl.style.letterSpacing = (state.cellW - naturalCellW) + 'px';
     titleEl.style.lineHeight = state.cellH + 'px';
-    titleEl.style.left = (panel.titleStartCol! * state.cellW) + 'px';
-    titleEl.style.top = (panel.titleRow! * state.cellH) + 'px';
+    if (panel.titleStartCol !== null && panel.titleRow !== null) {
+      titleEl.style.left = (panel.titleStartCol * state.cellW) + 'px';
+      titleEl.style.top = (panel.titleRow * state.cellH) + 'px';
+    }
 
     for (let li = 0; li < LINKS.length; li++) {
       const link = LINKS[li]!;

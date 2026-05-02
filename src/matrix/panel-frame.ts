@@ -14,20 +14,10 @@ import { setLocked } from './cells';
 import { getThemeColors } from './theme';
 
 export interface PanelLayout {
-  W: number;
-  H: number;
-  stackLeft: number;
-  stackW: number;
-  stackInteriorW: number;
-  groupTop: number;
-  totalH: number;
-  titleFrameTop: number | null;   // null when isPlayMode
   titleRow: number | null;
   titleStartCol: number | null;
-  linkFrameTop: number | null;
-  linkRows: number[];             // empty when isPlayMode
+  linkRows: number[];
   linkStartCols: number[];
-  buttonFrameTop: number;
   navRow: number;
   navStartCol: number;
   navLabel: string;
@@ -60,7 +50,7 @@ const drawFrame = (
   }
 };
 
-export const composePanelFrames = (W: number, H: number): PanelLayout => {
+export const applyPanelFrames = (W: number, H: number): PanelLayout => {
   const theme = getThemeColors();
   const toggleLabel = state.isLightMode ? TOGGLE_DARK_LABEL : TOGGLE_LIGHT_LABEL;
   const navLabel = state.isPlayMode ? NAV_BACK_LABEL : NAV_PLAY_LABEL;
@@ -169,12 +159,8 @@ export const composePanelFrames = (W: number, H: number): PanelLayout => {
   }
 
   return {
-    W, H,
-    stackLeft, stackW, stackInteriorW,
-    groupTop, totalH,
-    titleFrameTop, titleRow, titleStartCol,
-    linkFrameTop, linkRows, linkStartCols,
-    buttonFrameTop,
+    titleRow, titleStartCol,
+    linkRows, linkStartCols,
     navRow, navStartCol, navLabel, navHref,
     toggleRow, toggleStartCol, toggleLabel,
   };
