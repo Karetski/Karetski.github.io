@@ -7,7 +7,7 @@ export interface PlayfieldBounds {
   height: number;
 }
 
-export type MatrixEvent = 'regrid';
+export type MatrixEvent = 'regrid' | 'theme-change';
 
 export interface MatrixGame {
   readonly isPlayMode: boolean;
