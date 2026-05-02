@@ -1,8 +1,7 @@
 import type { RGB } from '../shared/types';
-import { CHARSETS, PLAY_BG_OPACITY_FADED, PLAY_BG_OPACITY_VISIBLE, PLAY_BG_SAT } from './constants';
+import { CHARSETS, PLAY_BG_OPACITY_FADED, PLAY_BG_SAT } from './constants';
 import { state } from './state';
 import { desaturate, dimToBg } from '../shared/math';
-import { getFlashIntensity } from './flash';
 
 export const getColorStr = (color: RGB | number[]): string => {
   const key = ((color[0]! | 0) << 16) | ((color[1]! | 0) << 8) | (color[2]! | 0);
