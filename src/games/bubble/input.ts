@@ -21,7 +21,7 @@ const onPointerDown = (e: PointerEvent) => {
     return;
   }
   if (state.gameOver) reset(state);
-  else fire();
+  else fire(state);
 };
 
 const onPointerUp = (e: PointerEvent) => {
@@ -30,7 +30,7 @@ const onPointerUp = (e: PointerEvent) => {
   state.pointerX = e.clientX;
   state.pointerY = e.clientY;
   if (state.gameOver) reset(state);
-  else fire();
+  else fire(state);
 };
 
 const onPointerCancel = () => { dragging = false; };

@@ -1,26 +1,82 @@
 import { AIM_LIMIT, COLLISION_R } from './constants';
-import { state, requireM } from './state';
+import { type GameGrid, type GameState, requireM } from './state';
 import { addPointBurst, tickBurst } from './bursts';
 import { collectFloaters, collectMatch, popGroup, tickPops } from './matching';
 import { ensureRow, makeBubble, descend, refillIfEmpty } from './bubbles';
 
-const slotToPixel = (i: number, j: number) => ({
+// Pure: clamps the aim angle to AIM_LIMIT around straight up.
+export const aimAngle = (
+  pointerX: number,
+  pointerY: number,
+  shooterPx: number,
+  shooterPy: number,
+  aimLimit: number = AIM_LIMIT,
+): number => {
+  const dx = pointerX - shooterPx;
+  const dy = Math.min(pointerY - shooterPy, -1);
+  let a = Math.atan2(dy, dx);
+  const lo = -Math.PI / 2 - aimLimit;
+  const hi = -Math.PI / 2 + aimLimit;
+  if (a < lo) a = lo;
+  if (a > hi) a = hi;
+  return a;
+};
+
+// Pure: bounce off vertical walls. Returns the corrected (x, vx); if neither
+// wall is touched, returns the inputs unchanged.
+export const reflectX = (
+  x: number,
+  vx: number,
+  leftBound: number,
+  rightBound: number,
+  halfW: number,
+): { x: number; vx: number } => {
+  if (x < leftBound + halfW) return { x: leftBound + halfW, vx: -vx };
+  if (x > rightBound - halfW) return { x: rightBound - halfW, vx: -vx };
+  return { x, vx };
+};
+
+// Pure: returns the [i, j] of the closest empty slot to the projectile in
+// the row band [tj-1, tj+1], using slot-normalised distance. Returns null
+// if no empty slot was found in that band.
+export const findSnapSlot = (
+  grid: GameGrid,
+  slotCols: number,
+  projX: number,
+  projY: number,
+  startSlotCol: number,
+  startSlotRow: number,
+  cellW: number,
+  cellH: number,
+): [number, number] | null => {
+  let best: [number, number] | null = null;
+  let bestD2 = Infinity;
+  const tj = Math.max(0, Math.round((projY / cellH) - startSlotRow));
+  for (let j = Math.max(0, tj - 1); j <= tj + 1; j++) {
+    const row = grid[j];
+    for (let i = 0; i < slotCols; i++) {
+      if (row && row[i]) continue;
+      const cellX = (startSlotCol + i) * cellW + cellW / 2;
+      const cellY = (startSlotRow + j) * cellH + cellH / 2;
+      const dx = (projX - cellX) / cellW;
+      const dy = (projY - cellY) / cellH;
+      const d2 = dx * dx + dy * dy;
+      if (d2 < bestD2) { bestD2 = d2; best = [i, j]; }
+    }
+  }
+  return best;
+};
+
+const slotToPixel = (state: GameState, i: number, j: number) => ({
   x: (state.startSlotCol + i) * state.cellW + state.cellW / 2,
   y: (state.startSlotRow + j) * state.cellH + state.cellH / 2,
 });
 
-export const updateAim = (): void => {
-  const dx = state.pointerX - state.shooterPx;
-  const dy = Math.min(state.pointerY - state.shooterPy, -1);
-  let a = Math.atan2(dy, dx);
-  const lo = -Math.PI / 2 - AIM_LIMIT;
-  const hi = -Math.PI / 2 + AIM_LIMIT;
-  if (a < lo) a = lo;
-  if (a > hi) a = hi;
-  state.shooter.angle = a;
+export const updateAim = (state: GameState): void => {
+  state.shooter.angle = aimAngle(state.pointerX, state.pointerY, state.shooterPx, state.shooterPy);
 };
 
-export const fire = (): void => {
+export const fire = (state: GameState, rng: () => number = Math.random): void => {
   if (state.projectile || state.gameOver || !state.shooter.current) return;
   state.projectile = {
     x: state.shooterPx,
@@ -31,20 +87,20 @@ export const fire = (): void => {
     char: state.shooter.current.char,
   };
   state.shooter.current = state.shooter.next;
-  state.shooter.next = makeBubble(state);
+  state.shooter.next = makeBubble(state, rng);
 };
 
-const wallMinX = (): number => state.startSlotCol * state.cellW;
-const wallMaxX = (): number => (state.startSlotCol + state.slotCols) * state.cellW;
+const wallMinX = (state: GameState): number => state.startSlotCol * state.cellW;
+const wallMaxX = (state: GameState): number => (state.startSlotCol + state.slotCols) * state.cellW;
 
-const collisionAt = (): boolean => {
+const collisionAt = (state: GameState): boolean => {
   const p = state.projectile!;
   // Ceiling — projectile centre has crossed the top of the playfield.
   if (p.y < state.startSlotRow * state.cellH) return true;
 
   // Distance check against nearby occupied slots. The grid is non-square
   // (cellW ≠ cellH), so normalise by cell size to keep the threshold
-  // isotropic in slot-space — same metric snapAndResolve uses to pick a
+  // isotropic in slot-space — same metric findSnapSlot uses to pick a
   // landing slot.
   const tj = Math.max(0, Math.round((p.y / state.cellH) - state.startSlotRow));
   const ti = Math.max(0, Math.min(state.slotCols - 1,
@@ -57,7 +113,7 @@ const collisionAt = (): boolean => {
     const iHi = Math.min(state.slotCols - 1, ti + 1);
     for (let i = iLo; i <= iHi; i++) {
       if (!row[i]) continue;
-      const sp = slotToPixel(i, j);
+      const sp = slotToPixel(state, i, j);
       const dx = (p.x - sp.x) / state.cellW;
       const dy = (p.y - sp.y) / state.cellH;
       if (dx * dx + dy * dy < r2) return true;
@@ -66,31 +122,23 @@ const collisionAt = (): boolean => {
   return false;
 };
 
-const snapAndResolve = (): void => {
+const snapAndResolve = (state: GameState, rng: () => number): void => {
   const M = requireM();
   const p = state.projectile!;
-  let best: { i: number; j: number } | null = null;
-  let bestD2 = Infinity;
-  const tj = Math.max(0, Math.round((p.y / state.cellH) - state.startSlotRow));
-  for (let j = Math.max(0, tj - 1); j <= tj + 1; j++) {
-    ensureRow(state, j);
-    for (let i = 0; i < state.slotCols; i++) {
-      if (state.grid[j]![i]) continue;
-      const sp = slotToPixel(i, j);
-      const dx = (p.x - sp.x) / state.cellW;
-      const dy = (p.y - sp.y) / state.cellH;
-      const d2 = dx * dx + dy * dy;
-      if (d2 < bestD2) { bestD2 = d2; best = { i, j }; }
-    }
-  }
-  if (best) {
-    ensureRow(state, best.j);
-    state.grid[best.j]![best.i] = { colorIdx: p.colorIdx, char: p.char };
+  const slot = findSnapSlot(
+    state.grid, state.slotCols,
+    p.x, p.y,
+    state.startSlotCol, state.startSlotRow,
+    state.cellW, state.cellH,
+  );
+  if (slot) {
+    ensureRow(state, slot[1]);
+    state.grid[slot[1]]![slot[0]] = { colorIdx: p.colorIdx, char: p.char };
 
     // Wave 1 — direct match (linear run or cluster). A combo shot collapses
     // the per-wave popups into a single banner showing the total earned, so
     // the points value is never displayed twice.
-    const matchCells = collectMatch(state.grid, state.slotCols, best.i, best.j);
+    const matchCells = collectMatch(state.grid, state.slotCols, slot[0], slot[1]);
     let waves = 0;
     let totalPopped = 0;
     let lastBurstColor: number[] | readonly number[] | null = null;
@@ -132,29 +180,30 @@ const snapAndResolve = (): void => {
   }
   state.projectile = null;
   state.shotsSinceDescent++;
-  const refilled = refillIfEmpty(state);
+  const refilled = refillIfEmpty(state, rng);
   if (!refilled && state.shotsSinceDescent >= state.shotsPerDescent) {
     state.shotsSinceDescent = 0;
-    descend(state);
+    descend(state, rng);
   }
 };
 
-export const tick = (dt: number): void => {
-  tickPops(state);
-  tickBurst(state);
+export const tick = (
+  state: GameState,
+  dt: number,
+  now: number = performance.now(),
+  rng: () => number = Math.random,
+): void => {
+  tickPops(state, now);
+  tickBurst(state, now);
   if (state.gameOver || !state.projectile) return;
   state.projectile.x += state.projectile.vx * dt;
   state.projectile.y += state.projectile.vy * dt;
   const halfW = state.cellW / 2;
-  if (state.projectile.x < wallMinX() + halfW) {
-    state.projectile.x = wallMinX() + halfW;
-    state.projectile.vx = -state.projectile.vx;
-  } else if (state.projectile.x > wallMaxX() - halfW) {
-    state.projectile.x = wallMaxX() - halfW;
-    state.projectile.vx = -state.projectile.vx;
-  }
-  if (collisionAt()) {
-    snapAndResolve();
+  const r = reflectX(state.projectile.x, state.projectile.vx, wallMinX(state), wallMaxX(state), halfW);
+  state.projectile.x = r.x;
+  state.projectile.vx = r.vx;
+  if (collisionAt(state)) {
+    snapAndResolve(state, rng);
   } else if (state.projectile.y > state.rows * state.cellH + state.cellH) {
     state.projectile = null;
   }

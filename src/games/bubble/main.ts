@@ -19,7 +19,7 @@ const start = (matrix: MatrixGame): void => {
     reset(state);
     state.pointerX = state.shooterPx;
     state.pointerY = state.shooterPy - 200;
-    updateAim();
+    updateAim(state);
     matrix.on('regrid', () => {
       const oldSlotCols = state.slotCols;
       computeLayout();
@@ -40,8 +40,8 @@ const start = (matrix: MatrixGame): void => {
       }
       const dt = lastT ? Math.min(0.05, (now - lastT) / 1000) : 0;
       lastT = now;
-      updateAim();
-      tick(dt);
+      updateAim(state);
+      tick(state, dt);
       checkLose(state);
       render();
       requestAnimationFrame(loop);
