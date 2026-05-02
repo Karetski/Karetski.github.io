@@ -1,86 +1,18 @@
 import {
   FONT_FAMILY,
   FONT_PX,
-  FRAME_CHARS,
-  FRAME_GAP,
-  FRAME_PAD,
   LINKS,
-  NAV_BACK_LABEL,
-  NAV_PLAY_LABEL,
   TITLE,
-  TOGGLE_DARK_LABEL,
-  TOGGLE_LIGHT_LABEL,
 } from './constants';
 import { state, emit, writeStoredTheme } from './state';
 import { resetColorCache } from './palette';
-import { setLocked } from './cells';
-import { getThemeColors } from './theme';
 import type { CRTPipeline } from './crt';
 import { initGrid } from './grid-init';
+import { composePanelFrames } from './panel-frame';
 
 export const setupGrid = (crt: CRTPipeline): void => {
   const { W, H, naturalCellW } = initGrid(crt);
-
-  const theme = getThemeColors();
-  const drawFrame = (top: number, left: number, w: number, h: number, color: number[] | readonly number[]) => {
-    for (let c = 0; c < w; c++) {
-      let topCh: string, botCh: string;
-      if (c === 0) { topCh = FRAME_CHARS.tl; botCh = FRAME_CHARS.bl; }
-      else if (c === w - 1) { topCh = FRAME_CHARS.tr; botCh = FRAME_CHARS.br; }
-      else { topCh = FRAME_CHARS.h; botCh = FRAME_CHARS.h; }
-      setLocked(top, left + c, topCh, color);
-      setLocked(top + h - 1, left + c, botCh, color);
-    }
-    for (let r = 1; r < h - 1; r++) {
-      setLocked(top + r, left, FRAME_CHARS.v, color);
-      setLocked(top + r, left + w - 1, FRAME_CHARS.v, color);
-    }
-    for (let r = 1; r < h - 1; r++) {
-      for (let c = 1; c < w - 1; c++) {
-        setLocked(top + r, left + c, ' ', color);
-      }
-    }
-  };
-
-  const toggleLabel = state.isLightMode ? TOGGLE_DARK_LABEL : TOGGLE_LIGHT_LABEL;
-  const navLabel = state.isPlayMode ? NAV_BACK_LABEL : NAV_PLAY_LABEL;
-  const navHref = state.isPlayMode ? 'index.html' : 'play.html';
-
-  const longestLink = Math.max(...LINKS.map((l) => l.label.length));
-  // Stable button width covers every label so the layout doesn't reflow
-  // when the toggle flips between "dark" and "light".
-  const longestButtonLabel = Math.max(
-    TOGGLE_DARK_LABEL.length, TOGGLE_LIGHT_LABEL.length,
-    NAV_PLAY_LABEL.length, NAV_BACK_LABEL.length,
-  );
-  const titleNaturalW = TITLE.length + 2 * FRAME_PAD + 2;
-  const linksNaturalW = longestLink + 2 * FRAME_PAD + 2;
-  const buttonNaturalW = longestButtonLabel + 2 * FRAME_PAD + 2;
-  const stackW = Math.max(titleNaturalW, linksNaturalW, buttonNaturalW);
-  const stackInteriorW = stackW - 2;
-
-  const titleFrameH = 3;
-  const linkFrameH = LINKS.length * 2 + 1;
-  // Bottom frame stacks two rows (nav + toggle) like the links frame:
-  // top border + nav row + separator + toggle row + bottom border.
-  const buttonFrameH = 5;
-
-  const stackLeft = Math.floor((state.cols - stackW) / 2);
-
-  let totalH: number, groupTop: number;
-  if (state.isPlayMode) {
-    totalH = buttonFrameH;
-    groupTop = state.rows - buttonFrameH;
-  } else {
-    totalH = titleFrameH + FRAME_GAP + linkFrameH + FRAME_GAP + buttonFrameH;
-    groupTop = Math.floor((state.rows - totalH) / 2);
-  }
-
-  // Panel bounds in vUv space (vUv.y is flipped: y=1 is top of canvas)
-  state.panelRect.x = (stackLeft * state.cellW) / W;
-  state.panelRect.z = ((stackLeft + stackW) * state.cellW) / W;
-  state.panelRect.y = 1 - ((groupTop + totalH) * state.cellH) / H;
-  state.panelRect.w = 1 - (groupTop * state.cellH) / H;
+  const panel = composePanelFrames(W, H);
 
   const titleEl = document.getElementById('title')!;
   const linksEl = document.getElementById('links')!;
@@ -92,101 +24,44 @@ export const setupGrid = (crt: CRTPipeline): void => {
   navEl.innerHTML = '';
   toggleEl.innerHTML = '';
 
-  let buttonFrameTop: number;
-  if (state.isPlayMode) {
-    buttonFrameTop = groupTop;
-  } else {
-    const titleFrameTop = groupTop;
-    const titleRow = titleFrameTop + 1;
-    const titleStartCol = stackLeft + 1 + Math.floor((stackInteriorW - TITLE.length) / 2);
-
-    drawFrame(titleFrameTop, stackLeft, stackW, titleFrameH, theme.frame);
-    for (let i = 0; i < TITLE.length; i++) {
-      setLocked(titleRow, titleStartCol + i, TITLE[i]!, theme.title);
-    }
-
+  if (!state.isPlayMode) {
     titleEl.textContent = TITLE;
     titleEl.style.font = `${FONT_PX}px ${FONT_FAMILY}`;
     titleEl.style.letterSpacing = (state.cellW - naturalCellW) + 'px';
     titleEl.style.lineHeight = state.cellH + 'px';
-    titleEl.style.left = (titleStartCol * state.cellW) + 'px';
-    titleEl.style.top = (titleRow * state.cellH) + 'px';
-
-    const linkFrameTop = titleFrameTop + titleFrameH + FRAME_GAP;
-    drawFrame(linkFrameTop, stackLeft, stackW, linkFrameH, theme.frame);
+    titleEl.style.left = (panel.titleStartCol! * state.cellW) + 'px';
+    titleEl.style.top = (panel.titleRow! * state.cellH) + 'px';
 
     for (let li = 0; li < LINKS.length; li++) {
       const link = LINKS[li]!;
-      const linkRow = linkFrameTop + 1 + li * 2;
-      const startCol = stackLeft + 1 + Math.floor((stackInteriorW - link.label.length) / 2);
-
-      for (let i = 0; i < link.label.length; i++) {
-        setLocked(linkRow, startCol + i, link.label[i]!, theme.link);
-      }
-
-      if (li < LINKS.length - 1) {
-        const sepRow = linkRow + 1;
-        setLocked(sepRow, stackLeft, '╠', theme.frame);
-        for (let c = 0; c < stackInteriorW; c++) {
-          setLocked(sepRow, stackLeft + 1 + c, '═', theme.sep);
-        }
-        setLocked(sepRow, stackLeft + stackW - 1, '╣', theme.frame);
-      }
-
       const a = document.createElement('a');
       a.href = link.href;
       a.target = '_blank';
       a.rel = 'noopener noreferrer';
       a.setAttribute('aria-label', link.label);
-      a.style.left = (startCol * state.cellW) + 'px';
-      a.style.top = (linkRow * state.cellH) + 'px';
+      a.style.left = (panel.linkStartCols[li]! * state.cellW) + 'px';
+      a.style.top = (panel.linkRows[li]! * state.cellH) + 'px';
       a.style.width = (link.label.length * state.cellW) + 'px';
       a.style.height = state.cellH + 'px';
       linksEl.appendChild(a);
     }
-
-    buttonFrameTop = linkFrameTop + linkFrameH + FRAME_GAP;
-  }
-
-  drawFrame(buttonFrameTop, stackLeft, stackW, buttonFrameH, theme.frame);
-  state.bottomPanelLeft = stackLeft;
-  state.bottomPanelWidth = stackW;
-  state.bottomPanelTop = buttonFrameTop;
-
-  const navRow = buttonFrameTop + 1;
-  const navStartCol = stackLeft + 1 + Math.floor((stackInteriorW - navLabel.length) / 2);
-  for (let i = 0; i < navLabel.length; i++) {
-    setLocked(navRow, navStartCol + i, navLabel[i]!, theme.link);
-  }
-
-  const buttonSepRow = navRow + 1;
-  setLocked(buttonSepRow, stackLeft, '╠', theme.frame);
-  for (let c = 0; c < stackInteriorW; c++) {
-    setLocked(buttonSepRow, stackLeft + 1 + c, '═', theme.sep);
-  }
-  setLocked(buttonSepRow, stackLeft + stackW - 1, '╣', theme.frame);
-
-  const toggleRow = buttonSepRow + 1;
-  const toggleStartCol = stackLeft + 1 + Math.floor((stackInteriorW - toggleLabel.length) / 2);
-  for (let i = 0; i < toggleLabel.length; i++) {
-    setLocked(toggleRow, toggleStartCol + i, toggleLabel[i]!, theme.link);
   }
 
   const navA = document.createElement('a');
-  navA.href = navHref;
-  navA.setAttribute('aria-label', navLabel);
-  navA.style.left = (navStartCol * state.cellW) + 'px';
-  navA.style.top = (navRow * state.cellH) + 'px';
-  navA.style.width = (navLabel.length * state.cellW) + 'px';
+  navA.href = panel.navHref;
+  navA.setAttribute('aria-label', panel.navLabel);
+  navA.style.left = (panel.navStartCol * state.cellW) + 'px';
+  navA.style.top = (panel.navRow * state.cellH) + 'px';
+  navA.style.width = (panel.navLabel.length * state.cellW) + 'px';
   navA.style.height = state.cellH + 'px';
   navEl.appendChild(navA);
 
   const toggleBtn = document.createElement('button');
-  toggleBtn.textContent = toggleLabel;
-  toggleBtn.setAttribute('aria-label', toggleLabel);
-  toggleBtn.style.left = (toggleStartCol * state.cellW) + 'px';
-  toggleBtn.style.top = (toggleRow * state.cellH) + 'px';
-  toggleBtn.style.width = (toggleLabel.length * state.cellW) + 'px';
+  toggleBtn.textContent = panel.toggleLabel;
+  toggleBtn.setAttribute('aria-label', panel.toggleLabel);
+  toggleBtn.style.left = (panel.toggleStartCol * state.cellW) + 'px';
+  toggleBtn.style.top = (panel.toggleRow * state.cellH) + 'px';
+  toggleBtn.style.width = (panel.toggleLabel.length * state.cellW) + 'px';
   toggleBtn.style.height = state.cellH + 'px';
   toggleBtn.onclick = () => {
     state.isLightMode = !state.isLightMode;
