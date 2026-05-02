@@ -12,7 +12,6 @@ export interface MatrixConfig {
   agingHalfLife: number;
   centerFade: number;
   centerFadeNoise: number;
-  livenessFloor: number;
 
   chromaticAberration: number;
   saturation: number;
@@ -43,7 +42,6 @@ export const defaultConfig: MatrixConfig = {
   agingHalfLife: 2.5,
   centerFade: 0.85,
   centerFadeNoise: 0.22,
-  livenessFloor: 0.08,
 
   chromaticAberration: 0.0035,
   saturation: 1.12,
@@ -73,10 +71,3 @@ export const defaultConfig: MatrixConfig = {
 
 export const cloneConfig = (c: MatrixConfig): MatrixConfig =>
   JSON.parse(JSON.stringify(c)) as MatrixConfig;
-
-export const playProfile: Partial<MatrixConfig> = {
-  noiseSpeed: 0.2,
-  colorNoiseSpeed: 0.06,
-  flipVariation: 0.2,
-  livenessFloor: 0,
-};

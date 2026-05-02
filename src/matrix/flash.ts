@@ -33,6 +33,8 @@ export const flashBackground = (durationMs: number): void => {
   f.start = performance.now();
 };
 
+export const getFlashIntensity = (): number => state.flash.intensity;
+
 export const consumeFlashRenderParams = (): FlashRenderParams => {
   const f = state.flash;
   const active = f.intensity > 0.001;

@@ -1,5 +1,5 @@
 import type { PlayfieldBounds, RGB } from '../shared/types';
-import { type MatrixConfig, defaultConfig, cloneConfig, playProfile } from './config';
+import { type MatrixConfig, defaultConfig, cloneConfig } from './config';
 import { THEME_KEY } from './constants';
 
 export interface Cell {
@@ -37,7 +37,7 @@ export interface FlashState {
   wasActive: boolean;
 }
 
-export type GameEvent = 'regrid' | 'theme-change';
+export type GameEvent = 'regrid';
 export type GameListener = () => void;
 
 const readStoredTheme = (): string | null => {
@@ -46,10 +46,13 @@ const readStoredTheme = (): string | null => {
 
 const isPlayMode = document.body.dataset['page'] === 'play';
 
-const config: MatrixConfig = {
-  ...cloneConfig(defaultConfig),
-  ...(isPlayMode ? playProfile : {}),
-};
+const config = cloneConfig(defaultConfig);
+if (isPlayMode) {
+  // Calm the field down so the game reads as the foreground action.
+  config.noiseSpeed = 0.2;
+  config.colorNoiseSpeed = 0.06;
+  config.flipVariation = 0.2;
+}
 
 export interface MatrixState {
   readonly isPlayMode: boolean;
@@ -95,7 +98,7 @@ export const state: MatrixState = {
   flash: { start: 0, attack: 120, hold: 180, decay: 520, intensity: 0, wasActive: false },
   startTime: performance.now(),
   lastFrameTime: 0,
-  gameListeners: { regrid: [], 'theme-change': [] },
+  gameListeners: { regrid: [] },
   refreshPickers: () => {},
 };
 

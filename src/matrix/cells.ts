@@ -1,10 +1,9 @@
-import { FRAME_BORDER_CHARS } from './constants';
+import { FRAME_BORDER_CHARS, SAT_LEVELS } from './constants';
 import { state, type Cell } from './state';
 import { applyBrightness, getColorStr, getPalette, randChar } from './palette';
 import { sampleColorIndex } from './noise';
 import { smoothstep01 } from '../shared/math';
 import { isInPlayfield } from './playfield';
-import { seedFlip } from './seed-flip';
 
 // Smoothstep-based radial visibility. distNorm ∈ [0,1] is normalised
 // distance from screen centre on the half-diagonal; noise ∈ [-1,1] is a
@@ -12,10 +11,9 @@ import { seedFlip } from './seed-flip';
 export const computeVisibility = (distNorm: number, noise: number): number => {
   const fade = state.config.centerFade;
   if (fade <= 0) return 1;
-  const floor = state.config.livenessFloor;
   const jittered = distNorm + noise * state.config.centerFadeNoise;
   const t = smoothstep01(jittered);
-  return floor + (1 - floor) * t;
+  return 1 - (1 - t) * fade;
 };
 
 const cellAt = (r: number, c: number): Cell | null => {
@@ -58,6 +56,7 @@ export const setUnlocked = (r: number, c: number): void => {
   cell.char = randChar(colorIndex);
   cell.heat = 0;
   cell.dirty = true;
-  seedFlip(cell, c, r, performance.now(), 'random');
+  cell.flipTime = performance.now();
+  cell.satLevel = SAT_LEVELS;
 };
 

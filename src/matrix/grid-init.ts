@@ -5,7 +5,6 @@ import { sampleColorIndex } from './noise';
 import { computeVisibility } from './cells';
 import { getThemeColors } from './theme';
 import { hash3 } from '../shared/math';
-import { seedFlip } from './seed-flip';
 import type { CRTPipeline } from './crt';
 
 export interface GridMetrics {
@@ -14,7 +13,7 @@ export interface GridMetrics {
   naturalCellW: number;
 }
 
-export const initGrid = (crt: CRTPipeline, prevGeometryKey: string | null): GridMetrics => {
+export const initGrid = (crt: CRTPipeline): GridMetrics => {
   const { gctx, gridCanvas, screenCanvas } = crt;
   document.documentElement.classList.toggle('light', state.isLightMode);
   state.dpr = window.devicePixelRatio || 1;
@@ -50,11 +49,6 @@ export const initGrid = (crt: CRTPipeline, prevGeometryKey: string | null): Grid
   state.cols = Math.floor(W / state.cellW);
   state.rows = Math.floor(H / state.cellH);
 
-  const geometryKey = `${state.cellW}:${state.cellH}:${state.cols}:${state.rows}`;
-  if (geometryKey === prevGeometryKey) {
-    return { W, H, naturalCellW };
-  }
-
   const now = performance.now();
   const palette = getPalette();
   const cx0 = W * 0.5;
@@ -70,7 +64,7 @@ export const initGrid = (crt: CRTPipeline, prevGeometryKey: string | null): Grid
     const py = r * state.cellH + state.cellH * 0.5;
     const distNorm = Math.min(1, Math.hypot(px - cx0, py - cy0) / maxR);
     const noise = (hash3(c, r, 31) - 0.5) * 2;
-    const cell: Cell = {
+    cells[i] = {
       char: randChar(colorIndex),
       locked: false,
       color,
@@ -84,8 +78,6 @@ export const initGrid = (crt: CRTPipeline, prevGeometryKey: string | null): Grid
       fadeNoise: noise,
       visibility: computeVisibility(distNorm, noise),
     };
-    seedFlip(cell, c, r, now, 'aged');
-    cells[i] = cell;
   }
   state.cells = cells;
 
