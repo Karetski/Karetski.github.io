@@ -12,9 +12,10 @@ import { seedFlip } from './seed-flip';
 export const computeVisibility = (distNorm: number, noise: number): number => {
   const fade = state.config.centerFade;
   if (fade <= 0) return 1;
+  const floor = state.config.livenessFloor;
   const jittered = distNorm + noise * state.config.centerFadeNoise;
   const t = smoothstep01(jittered);
-  return 1 - (1 - t) * fade;
+  return floor + (1 - floor) * t;
 };
 
 const cellAt = (r: number, c: number): Cell | null => {

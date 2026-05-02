@@ -6,7 +6,7 @@ import { sampleColorIndex, sampleFlipProb } from './noise';
 import { getThemeColors } from './theme';
 import { drawBoxChar } from './box-chars';
 import { stepPointer } from './pointer';
-import { desaturate, dimToBg } from '../shared/math';
+import { dimToBg } from '../shared/math';
 import { consumeFlashRenderParams, type FlashRenderParams } from './flash';
 import { seedFlip } from './seed-flip';
 
@@ -55,8 +55,7 @@ const composeCellColor = ({
   }
 
   if (qf < 1 || vis < 1 || flashThisCell) {
-    const colorIn = state.isPlayMode ? desaturate(baseColor, qf) : baseColor;
-    const aged = dimToBg(colorIn, opacity, bg);
+    const aged = dimToBg(baseColor, opacity, bg);
     return getColorStr(aged);
   }
   return cell.colorStr;
@@ -70,10 +69,10 @@ export const updateAndDrawGrid = (gctx: CanvasRenderingContext2D, now: number): 
 
   stepPointer();
 
-  const outerPalette = getPalette(false);
-  const innerPalette = state.isPlayMode ? getPalette(true) : outerPalette;
-  const theme = getThemeColors();
   const pb = getBounds();
+  const outerPalette = getPalette(false);
+  const innerPalette = pb ? getPalette(true) : outerPalette;
+  const theme = getThemeColors();
   const bg = state.isLightMode ? 255 : 0;
 
   // Flash live-blend: each frame, lerp every outer cell's stored colour
