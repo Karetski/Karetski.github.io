@@ -24,3 +24,9 @@ export const addPointBurst = (
   }
   state.activeBurst = { text, color, kind, tStart: performance.now() };
 };
+
+export const tickBurst = (): void => {
+  if (!state.activeBurst) return;
+  const burstAge = performance.now() - state.activeBurst.tStart;
+  if (burstAge >= burstDuration(state.activeBurst.kind)) state.activeBurst = null;
+};

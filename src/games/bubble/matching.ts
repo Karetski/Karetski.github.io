@@ -1,6 +1,6 @@
 import { NEIGHBORS, POP_DURATION_MS, type PopKind } from './constants';
 import { state, requireM } from './state';
-import { addPointBurst, burstDuration } from './bursts';
+import { addPointBurst } from './bursts';
 
 const slotToCell = (i: number, j: number) => ({
   col: state.startSlotCol + i,
@@ -171,17 +171,12 @@ export const checkLose = (): void => {
   }
 };
 
-export const tickPopAndBurst = (): void => {
-  if (state.popping.length) {
-    const now = performance.now();
-    let w = 0;
-    for (let r = 0; r < state.popping.length; r++) {
-      if (now - state.popping[r]!.tStart < POP_DURATION_MS) state.popping[w++] = state.popping[r]!;
-    }
-    state.popping.length = w;
+export const tickPops = (): void => {
+  if (!state.popping.length) return;
+  const now = performance.now();
+  let w = 0;
+  for (let r = 0; r < state.popping.length; r++) {
+    if (now - state.popping[r]!.tStart < POP_DURATION_MS) state.popping[w++] = state.popping[r]!;
   }
-  if (state.activeBurst) {
-    const burstAge = performance.now() - state.activeBurst.tStart;
-    if (burstAge >= burstDuration(state.activeBurst.kind)) state.activeBurst = null;
-  }
+  state.popping.length = w;
 };

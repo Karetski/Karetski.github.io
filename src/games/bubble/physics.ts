@@ -1,7 +1,7 @@
 import { AIM_LIMIT, COLLISION_R } from './constants';
 import { state, requireM } from './state';
-import { addPointBurst } from './bursts';
-import { collectFloaters, collectMatch, popGroup, tickPopAndBurst } from './matching';
+import { addPointBurst, tickBurst } from './bursts';
+import { collectFloaters, collectMatch, popGroup, tickPops } from './matching';
 import { ensureRow, makeBubble, descend, refillIfEmpty } from './bubbles';
 
 const slotToPixel = (i: number, j: number) => ({
@@ -140,7 +140,8 @@ const snapAndResolve = (): void => {
 };
 
 export const tick = (dt: number): void => {
-  tickPopAndBurst();
+  tickPops();
+  tickBurst();
   if (state.gameOver || !state.projectile) return;
   state.projectile.x += state.projectile.vx * dt;
   state.projectile.y += state.projectile.vy * dt;
