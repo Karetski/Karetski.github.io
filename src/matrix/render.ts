@@ -1,11 +1,65 @@
 import { SAT_LEVELS, TRAIL_TAU } from './constants';
-import { state } from './state';
+import { state, type Cell } from './state';
 import { applyBrightness, getColorStr, getPalette, randChar } from './palette';
+import { getBounds } from './playfield';
 import { sampleColorIndex, sampleFlipProb } from './noise';
 import { getThemeColors } from './theme';
 import { drawBoxChar } from './box-chars';
 import { stepPointer } from './pointer';
 import { desaturate, dimToBg } from '../shared/math';
+import { consumeFlashRenderParams, type FlashRenderParams } from './flash';
+
+interface ComposeArgs {
+  cell: Cell;
+  now: number;
+  agingActive: boolean;
+  agingDecay: number;
+  fadeActive: boolean;
+  inPlay: boolean;
+  flash: FlashRenderParams;
+  bg: number;
+}
+
+const composeCellColor = ({
+  cell, now, agingActive, agingDecay, fadeActive, inPlay, flash, bg,
+}: ComposeArgs): string => {
+  if (cell.locked) return cell.colorStr;
+
+  let qf = 1;
+  if (agingActive) {
+    const factor = Math.pow(0.5, (now - cell.flipTime) * agingDecay);
+    const level = Math.round(factor * SAT_LEVELS);
+    if (level !== cell.satLevel) {
+      cell.satLevel = level;
+      cell.dirty = true;
+    }
+    qf = level / SAT_LEVELS;
+  }
+  const vis = fadeActive ? cell.visibility : 1;
+  const opacity = qf * vis;
+
+  const flashThisCell = flash.active && !inPlay;
+  let baseColor: number[] | readonly number[] = cell.color;
+  if (flashThisCell && flash.baseP) {
+    const v = flash.baseP[cell.colorIndex]!;
+    const t = flash.intensity;
+    baseColor = [
+      cell.color[0]! + (v[0] - cell.color[0]!) * t,
+      cell.color[1]! + (v[1] - cell.color[1]!) * t,
+      cell.color[2]! + (v[2] - cell.color[2]!) * t,
+    ];
+    cell.dirty = true;
+  } else if (flash.cleanup && !inPlay) {
+    cell.dirty = true;
+  }
+
+  if (qf < 1 || vis < 1 || flashThisCell) {
+    const colorIn = state.isPlayMode ? desaturate(baseColor, qf) : baseColor;
+    const aged = dimToBg(colorIn, opacity, bg);
+    return getColorStr(aged);
+  }
+  return cell.colorStr;
+};
 
 export const updateAndDrawGrid = (gctx: CanvasRenderingContext2D, now: number): void => {
   const { config, cells, cellW, cellH, cols, rows } = state;
@@ -18,25 +72,16 @@ export const updateAndDrawGrid = (gctx: CanvasRenderingContext2D, now: number): 
   const outerPalette = getPalette(false);
   const innerPalette = state.isPlayMode ? getPalette(true) : outerPalette;
   const theme = getThemeColors();
-  const pb = state.playfieldBounds;
+  const pb = getBounds();
   const bg = state.isLightMode ? 255 : 0;
 
   // Flash live-blend: each frame, lerp every outer cell's stored colour
   // toward the un-dampened palette by `flashIntensity`. The cell.color
   // itself isn't mutated — only the displayed colour — so the flash leaves
-  // no residue once the envelope returns to 0. One extra cleanup frame is
-  // forced when intensity drops to 0 so cells repaint with their plain
-  // stored colour on the way out.
-  const flashActive  = state.flash.intensity > 0.001;
-  const flashCleanup = !flashActive && state.flash.wasActive;
-  state.flash.wasActive = flashActive;
-  const flashBaseP   = (flashActive || flashCleanup)
-    ? (state.isLightMode ? config.paletteLight : config.paletteDark)
-    : null;
-  // Outer cells flip faster during the flash so the field genuinely churns
-  // in sync with the lit-up palette — a static recolor reads as a slab,
-  // accelerated turnover reads alive.
-  const flashFlipMul = flashActive ? 1 + state.flash.intensity * 6 : 1;
+  // no residue once the envelope returns to 0. composeCellColor consumes
+  // flash.active/cleanup/baseP/intensity. The outer flip rate stays here
+  // because it modulates the per-row probability, not per-cell colour.
+  const flash = consumeFlashRenderParams();
   // Aging + radial fade run in both modes. In play mode they compose with
   // the per-palette desat/dim — cells start from the play palette (already
   // pre-dimmed) and age further toward the theme bg, so the field reads
@@ -56,7 +101,7 @@ export const updateAndDrawGrid = (gctx: CanvasRenderingContext2D, now: number): 
 
       if (!cell.locked) {
         let baseFlipProb = sampleFlipProb(c, r, now, dt);
-        if (!inPlay && flashFlipMul > 1) baseFlipProb *= flashFlipMul;
+        if (!inPlay && flash.flipMul > 1) baseFlipProb *= flash.flipMul;
         // Heat boosts the flip rate so disturbed cells churn faster.
         const flipProb = Math.min(1, baseFlipProb + cell.heat);
         if (Math.random() < flipProb) {
@@ -84,40 +129,10 @@ export const updateAndDrawGrid = (gctx: CanvasRenderingContext2D, now: number): 
       // saturation aging (vivid on flip, fading toward grayscale/bg with
       // age) and a static radial visibility (centre cells fade to bg,
       // edges stay bright). Locked cells (title/frame/links) skip both.
-      let drawColorStr = cell.colorStr;
-      if (!cell.locked) {
-        let qf = 1;
-        if (agingActive) {
-          const factor = Math.pow(0.5, (now - cell.flipTime) * agingDecay);
-          const level = Math.round(factor * SAT_LEVELS);
-          if (level !== cell.satLevel) {
-            cell.satLevel = level;
-            cell.dirty = true;
-          }
-          qf = level / SAT_LEVELS;
-        }
-        const vis = fadeActive ? cell.visibility : 1;
-        const opacity = qf * vis;
-        let baseColor: number[] | readonly number[] = cell.color;
-        const flashThisCell = flashActive && !inPlay;
-        if (flashThisCell && flashBaseP) {
-          const v = flashBaseP[cell.colorIndex]!;
-          const t = state.flash.intensity;
-          baseColor = [
-            cell.color[0]! + (v[0] - cell.color[0]!) * t,
-            cell.color[1]! + (v[1] - cell.color[1]!) * t,
-            cell.color[2]! + (v[2] - cell.color[2]!) * t,
-          ];
-          cell.dirty = true;
-        } else if (flashCleanup && !inPlay) {
-          cell.dirty = true;
-        }
-        if (qf < 1 || vis < 1 || flashThisCell) {
-          const colorIn = state.isPlayMode ? desaturate(baseColor, qf) : baseColor;
-          const aged = dimToBg(colorIn, opacity, bg);
-          drawColorStr = getColorStr(aged);
-        }
-      }
+      const drawColorStr = composeCellColor({
+        cell, now, agingActive, agingDecay, fadeActive,
+        inPlay: !!inPlay, flash, bg,
+      });
 
       if (cell.char === prevChar && !cell.dirty) continue;
       cell.dirty = false;

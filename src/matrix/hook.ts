@@ -1,6 +1,7 @@
 import type { MatrixGame, PlayfieldBounds, RGB } from '../shared/types';
 import { COL_TITLE, NUM_COLORS, SAT_LEVELS } from './constants';
 import { state } from './state';
+import { isInPlayfield, setBounds } from './playfield';
 import { applyBrightness, getColorStr, getPalette, getVividPalette, randChar } from './palette';
 import { setLocked, setUnlocked } from './cells';
 import { getThemeColors } from './theme';
@@ -29,7 +30,7 @@ export const createMatrixGame = (): MatrixGame => ({
     return !!state.cells[row * state.cols + col]?.locked;
   },
   setPlayfieldBounds: (b: PlayfieldBounds | null) => {
-    state.playfieldBounds = b;
+    setBounds(b);
     if (!state.cells.length) return;
     // Re-color every unlocked cell with the palette that matches its new
     // inside/outside-the-playfield status — without this, cells that
@@ -41,7 +42,7 @@ export const createMatrixGame = (): MatrixGame => ({
       if (cell.locked) { cell.dirty = true; continue; }
       const r = (i / state.cols) | 0;
       const c = i - r * state.cols;
-      const inPlay = !!(b && r >= b.row && r < b.row + b.height && c >= b.col && c < b.col + b.width);
+      const inPlay = isInPlayfield(c, r);
       const palette = inPlay ? innerP : outerP;
       cell.color = applyBrightness(palette[cell.colorIndex]!);
       cell.colorStr = getColorStr(cell.color);

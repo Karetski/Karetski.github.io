@@ -73,7 +73,7 @@ const main = async () => {
     await indexPage.close();
 
     const playPage = await ctx.newPage();
-    reports.push(await probe(playPage, 'play', `${BASE}/play.html`));
+    reports.push(await probe(playPage, 'play', `${BASE}/play/bubble.html`));
     // Aim toward the playfield centre and click to fire a couple of shots.
     await playPage.mouse.move(640, 200);
     await playPage.waitForTimeout(150);

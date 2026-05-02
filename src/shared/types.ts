@@ -33,6 +33,12 @@ export interface MatrixGame {
   flashBackground(durationMs: number): void;
 }
 
+export interface Game {
+  readonly slug: string;
+  readonly title: string;
+  start(matrix: MatrixGame): void;
+}
+
 declare global {
   interface Window {
     matrixGame?: MatrixGame;

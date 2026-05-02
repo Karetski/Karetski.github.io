@@ -1,8 +1,15 @@
+import type { RGB } from '../shared/types';
 import { state } from './state';
 import { smoothstep } from '../shared/math';
 
-// Smooth attack/hold/decay envelope. Smoothstep on each ramp eases the
-// transitions so the bg breathes in and out instead of jumping.
+export interface FlashRenderParams {
+  active: boolean;
+  cleanup: boolean;
+  baseP: readonly [RGB, RGB, RGB] | null;
+  flipMul: number;
+  intensity: number;
+}
+
 export const updateFlashIntensity = (now: number): void => {
   const f = state.flash;
   if (!f.start) { f.intensity = 0; return; }
@@ -22,9 +29,20 @@ export const updateFlashIntensity = (now: number): void => {
 
 export const flashBackground = (durationMs: number): void => {
   const f = state.flash;
-  // Sum durationMs into the envelope's hold time so combo size scales
-  // how long the field lingers vivid; attack and decay stay fixed so
-  // the onset feel is consistent across all combos.
   f.hold = Math.max(60, Math.min(700, (durationMs || 250) - f.attack));
   f.start = performance.now();
+};
+
+export const getFlashIntensity = (): number => state.flash.intensity;
+
+export const consumeFlashRenderParams = (): FlashRenderParams => {
+  const f = state.flash;
+  const active = f.intensity > 0.001;
+  const cleanup = !active && f.wasActive;
+  f.wasActive = active;
+  const baseP = (active || cleanup)
+    ? (state.isLightMode ? state.config.paletteLight : state.config.paletteDark)
+    : null;
+  const flipMul = active ? 1 + f.intensity * 6 : 1;
+  return { active, cleanup, baseP, flipMul, intensity: f.intensity };
 };

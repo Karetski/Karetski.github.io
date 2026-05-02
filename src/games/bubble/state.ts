@@ -1,4 +1,4 @@
-import type { MatrixGame } from '../shared/types';
+import type { MatrixGame } from '../../shared/types';
 import type { BurstKind, PopKind } from './constants';
 
 export interface Bubble { colorIdx: number; char: string }

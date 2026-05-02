@@ -2,6 +2,7 @@ import type { RGB } from '../shared/types';
 import { CHARSETS, PLAY_BG_OPACITY_FADED, PLAY_BG_OPACITY_VISIBLE, PLAY_BG_SAT } from './constants';
 import { state } from './state';
 import { desaturate, dimToBg } from '../shared/math';
+import { getFlashIntensity } from './flash';
 
 export const getColorStr = (color: RGB | number[]): string => {
   const key = ((color[0]! | 0) << 16) | ((color[1]! | 0) << 8) | (color[2]! | 0);
@@ -32,7 +33,7 @@ export const getPalette = (inPlay = false): (RGB | number[])[] => {
   // Outside the playfield, lerp toward the un-dampened palette by the
   // current flash envelope — so newly flipped cells smoothly track the
   // splash instead of snapping between two states.
-  const t = state.flash.intensity;
+  const t = getFlashIntensity();
   if (!inPlay && t > 0.001) {
     return dampened.map((d, i) => [
       d[0]! + (base[i]![0] - d[0]!) * t,

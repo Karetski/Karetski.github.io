@@ -1,5 +1,5 @@
 import { startMatrix } from './matrix/main';
-import { startGame } from './game/main';
+import { bubbleGame } from './games/bubble/main';
 
 const matrix = startMatrix();
-startGame(matrix);
+bubbleGame.start(matrix);
