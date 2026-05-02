@@ -4,6 +4,8 @@ import {
   FRAME_PAD,
   LINKS,
   NAV_BACK_LABEL,
+  NAV_HOME_HREF,
+  NAV_PLAY_HREF,
   NAV_PLAY_LABEL,
   TITLE,
   TOGGLE_DARK_LABEL,
@@ -54,7 +56,7 @@ export const applyPanelFrames = (W: number, H: number): PanelLayout => {
   const theme = getThemeColors();
   const toggleLabel = state.isLightMode ? TOGGLE_DARK_LABEL : TOGGLE_LIGHT_LABEL;
   const navLabel = state.isPlayMode ? NAV_BACK_LABEL : NAV_PLAY_LABEL;
-  const navHref = state.isPlayMode ? 'index.html' : 'play.html';
+  const navHref = state.isPlayMode ? NAV_HOME_HREF : NAV_PLAY_HREF;
 
   const longestLink = Math.max(...LINKS.map((l) => l.label.length));
   const longestButtonLabel = Math.max(
