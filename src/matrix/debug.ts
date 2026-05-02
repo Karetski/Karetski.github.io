@@ -1,6 +1,7 @@
 import { defaultConfig, type MatrixConfig } from './config';
 import { state } from './state';
 import { applyBrightness, getColorStr, getPalette, randChar, resetColorCache } from './palette';
+import { isInPlayfield } from './playfield';
 import { sampleColorIndex } from './noise';
 import { computeVisibility } from './cells';
 import { SAT_LEVELS } from './constants';
@@ -165,13 +166,12 @@ export const setupDebugPanel = (crt: CRTPipeline): void => {
     const t = performance.now();
     const innerP = getPalette(true);
     const outerP = getPalette(false);
-    const pb = state.playfieldBounds;
     for (let i = 0; i < state.cells.length; i++) {
       const cell = state.cells[i]!;
       if (cell.locked) continue;
       const r = (i / state.cols) | 0;
       const c = i - r * state.cols;
-      const inPlay = !!(pb && r >= pb.row && r < pb.row + pb.height && c >= pb.col && c < pb.col + pb.width);
+      const inPlay = isInPlayfield(c, r);
       const palette = inPlay ? innerP : outerP;
       const idx = sampleColorIndex(c, r, t);
       cell.colorIndex = idx;

@@ -1,6 +1,7 @@
 import { SAT_LEVELS, TRAIL_TAU } from './constants';
 import { state } from './state';
 import { applyBrightness, getColorStr, getPalette, randChar } from './palette';
+import { getBounds } from './playfield';
 import { sampleColorIndex, sampleFlipProb } from './noise';
 import { getThemeColors } from './theme';
 import { drawBoxChar } from './box-chars';
@@ -19,7 +20,7 @@ export const updateAndDrawGrid = (gctx: CanvasRenderingContext2D, now: number): 
   const outerPalette = getPalette(false);
   const innerPalette = state.isPlayMode ? getPalette(true) : outerPalette;
   const theme = getThemeColors();
-  const pb = state.playfieldBounds;
+  const pb = getBounds();
   const bg = state.isLightMode ? 255 : 0;
 
   // Flash live-blend: each frame, lerp every outer cell's stored colour

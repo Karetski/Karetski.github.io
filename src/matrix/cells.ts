@@ -1,8 +1,9 @@
 import { FRAME_BORDER_CHARS, SAT_LEVELS } from './constants';
 import { state, type Cell } from './state';
-import { applyBrightness, getColorStr, randChar } from './palette';
+import { applyBrightness, getColorStr, getPalette, randChar } from './palette';
 import { sampleColorIndex } from './noise';
 import { smoothstep01 } from '../shared/math';
+import { isInPlayfield } from './playfield';
 
 // Smoothstep-based radial visibility. distNorm ∈ [0,1] is normalised
 // distance from screen centre on the half-diagonal; noise ∈ [-1,1] is a
@@ -43,12 +44,8 @@ export const setLocked = (r: number, c: number, ch: string, color: number[] | re
 export const setUnlocked = (r: number, c: number): void => {
   const cell = cellAt(r, c);
   if (!cell || !cell.locked) return;
-  const pb = state.playfieldBounds;
-  const inPlay = !!(pb && r >= pb.row && r < pb.row + pb.height && c >= pb.col && c < pb.col + pb.width);
-  // Defer palette import to runtime to break the cycle palette → cells.
-  // Safe because by the time this is called the modules are fully evaluated.
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const palette = getPaletteFor(inPlay);
+  const inPlay = isInPlayfield(c, r);
+  const palette = getPalette(inPlay);
   const colorIndex = sampleColorIndex(c, r, performance.now());
   const color = applyBrightness(palette[colorIndex]!);
   cell.locked = false;
@@ -63,7 +60,3 @@ export const setUnlocked = (r: number, c: number): void => {
   cell.satLevel = SAT_LEVELS;
 };
 
-// Indirection just to keep the import of `getPalette` co-located with the
-// only place this module needs it; helps reading the dependency graph.
-import { getPalette } from './palette';
-const getPaletteFor = (inPlay: boolean) => getPalette(inPlay);
