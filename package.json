@@ -1,0 +1,16 @@
+{
+  "name": "karetski.com",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "bun build ./src/index.ts ./src/play.ts --outdir dist --target browser --minify",
+    "dev": "bun build ./src/index.ts ./src/play.ts --outdir dist --target browser --watch",
+    "typecheck": "tsc --noEmit",
+    "verify": "bun scripts/verify.ts"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "playwright": "^1.59.1",
+    "typescript": "^5.6.0"
+  }
+}

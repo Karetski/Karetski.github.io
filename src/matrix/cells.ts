@@ -1,0 +1,69 @@
+import { FRAME_BORDER_CHARS, SAT_LEVELS } from './constants';
+import { state, type Cell } from './state';
+import { applyBrightness, getColorStr, randChar } from './palette';
+import { sampleColorIndex } from './noise';
+import { smoothstep01 } from '../shared/math';
+
+// Smoothstep-based radial visibility. distNorm ∈ [0,1] is normalised
+// distance from screen centre on the half-diagonal; noise ∈ [-1,1] is a
+// per-cell stipple. centerFade scales how much of the centre dims to bg.
+export const computeVisibility = (distNorm: number, noise: number): number => {
+  const fade = state.config.centerFade;
+  if (fade <= 0) return 1;
+  const jittered = distNorm + noise * state.config.centerFadeNoise;
+  const t = smoothstep01(jittered);
+  return 1 - (1 - t) * fade;
+};
+
+const cellAt = (r: number, c: number): Cell | null => {
+  if (r < 0 || r >= state.rows || c < 0 || c >= state.cols) return null;
+  return state.cells[r * state.cols + c] ?? null;
+};
+
+export const setLocked = (r: number, c: number, ch: string, color: number[] | readonly number[]): void => {
+  const cell = cellAt(r, c);
+  if (!cell) return;
+  const newColStr = getColorStr(color as number[]);
+  // Idempotent: stable game cells (a placed bubble re-asserted each frame)
+  // skip the redraw path entirely.
+  if (cell.locked && cell.char === ch && cell.colorStr === newColStr) return;
+  cell.locked = true;
+  cell.color = color as number[];
+  cell.colorStr = newColStr;
+  cell.char = ch;
+  cell.isFrameBorder = FRAME_BORDER_CHARS.indexOf(ch) >= 0;
+  cell.dirty = true;
+};
+
+// Returns a previously-locked cell to the flipping background, picking a
+// fresh char/colour from the current noise field so the gap blends in.
+// Picks the palette based on whether the cell sits inside the play rect —
+// otherwise an unlocked aim-line cell would briefly flash at the wrong
+// opacity, leaving a visible trail behind the cursor.
+export const setUnlocked = (r: number, c: number): void => {
+  const cell = cellAt(r, c);
+  if (!cell || !cell.locked) return;
+  const pb = state.playfieldBounds;
+  const inPlay = !!(pb && r >= pb.row && r < pb.row + pb.height && c >= pb.col && c < pb.col + pb.width);
+  // Defer palette import to runtime to break the cycle palette → cells.
+  // Safe because by the time this is called the modules are fully evaluated.
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const palette = getPaletteFor(inPlay);
+  const colorIndex = sampleColorIndex(c, r, performance.now());
+  const color = applyBrightness(palette[colorIndex]!);
+  cell.locked = false;
+  cell.isFrameBorder = false;
+  cell.colorIndex = colorIndex;
+  cell.color = color;
+  cell.colorStr = getColorStr(color);
+  cell.char = randChar(colorIndex);
+  cell.heat = 0;
+  cell.dirty = true;
+  cell.flipTime = performance.now();
+  cell.satLevel = SAT_LEVELS;
+};
+
+// Indirection just to keep the import of `getPalette` co-located with the
+// only place this module needs it; helps reading the dependency graph.
+import { getPalette } from './palette';
+const getPaletteFor = (inPlay: boolean) => getPalette(inPlay);
