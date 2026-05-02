@@ -1,4 +1,4 @@
-import type { MatrixGame } from '../../shared/types';
+import type { Game, MatrixGame } from '../../shared/types';
 import { state } from './state';
 import { computeLayout } from './layout';
 import { reset } from './bubbles';
@@ -7,7 +7,7 @@ import { checkLose } from './matching';
 import { render } from './render';
 import { installGameInput } from './input';
 
-export const startGame = (matrix: MatrixGame): void => {
+const start = (matrix: MatrixGame): void => {
   state.M = matrix;
 
   const tryStart = () => {
@@ -54,4 +54,10 @@ export const startGame = (matrix: MatrixGame): void => {
   // indirectly via the input module and re-exporting it makes the public
   // surface explicit.
   void _fire;
+};
+
+export const bubbleGame: Game = {
+  slug: 'bubble',
+  title: 'bubble shooter',
+  start,
 };
