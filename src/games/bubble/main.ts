@@ -16,7 +16,7 @@ const start = (matrix: MatrixGame): void => {
       return;
     }
     computeLayout();
-    reset();
+    reset(state);
     state.pointerX = state.shooterPx;
     state.pointerY = state.shooterPy - 200;
     updateAim();
@@ -26,7 +26,7 @@ const start = (matrix: MatrixGame): void => {
       // If the playfield width changed (only happens when the matrix's
       // panel labels change), the existing grid rows have the wrong length.
       // Reset the game to keep the data structure consistent.
-      if (state.slotCols !== oldSlotCols) reset();
+      if (state.slotCols !== oldSlotCols) reset(state);
       state.lastWritten = new Set();
     });
     installGameInput();

@@ -31,7 +31,7 @@ export const fire = (): void => {
     char: state.shooter.current.char,
   };
   state.shooter.current = state.shooter.next;
-  state.shooter.next = makeBubble();
+  state.shooter.next = makeBubble(state);
 };
 
 const wallMinX = (): number => state.startSlotCol * state.cellW;
@@ -73,7 +73,7 @@ const snapAndResolve = (): void => {
   let bestD2 = Infinity;
   const tj = Math.max(0, Math.round((p.y / state.cellH) - state.startSlotRow));
   for (let j = Math.max(0, tj - 1); j <= tj + 1; j++) {
-    ensureRow(j);
+    ensureRow(state, j);
     for (let i = 0; i < state.slotCols; i++) {
       if (state.grid[j]![i]) continue;
       const sp = slotToPixel(i, j);
@@ -84,7 +84,7 @@ const snapAndResolve = (): void => {
     }
   }
   if (best) {
-    ensureRow(best.j);
+    ensureRow(state, best.j);
     state.grid[best.j]![best.i] = { colorIdx: p.colorIdx, char: p.char };
 
     // Wave 1 — direct match (linear run or cluster). A combo shot collapses
@@ -132,10 +132,10 @@ const snapAndResolve = (): void => {
   }
   state.projectile = null;
   state.shotsSinceDescent++;
-  const refilled = refillIfEmpty();
+  const refilled = refillIfEmpty(state);
   if (!refilled && state.shotsSinceDescent >= state.shotsPerDescent) {
     state.shotsSinceDescent = 0;
-    descend();
+    descend(state);
   }
 };
 

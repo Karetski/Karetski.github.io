@@ -1,13 +1,13 @@
 import { INITIAL_ROWS, INITIAL_SHOTS_PER_DESCENT, MIN_SHOTS_PER_DESCENT, NEW_ROW_FILL_BASE, NEW_ROW_FILL_PER_LEVEL, NUM_COLORS, REFILL_ROWS } from './constants';
-import { state, requireM, type Bubble } from './state';
+import { type Bubble, type GameState, requireM } from './state';
 import { addPointBurst } from './bursts';
 import { dropFloaters } from './matching';
 
-export const ensureRow = (j: number): void => {
+export const ensureRow = (state: GameState, j: number): void => {
   while (state.grid.length <= j) state.grid.push(new Array(state.slotCols).fill(null));
 };
 
-export const makeBubble = (): Bubble => {
+export const makeBubble = (state: GameState, rng: () => number = Math.random): Bubble => {
   const M = requireM();
   const present = new Set<number>();
   for (let j = 0; j < state.grid.length; j++) {
@@ -15,16 +15,20 @@ export const makeBubble = (): Bubble => {
     for (let i = 0; i < row.length; i++) if (row[i]) present.add(row[i]!.colorIdx);
   }
   const choices = present.size > 0 ? [...present] : [0, 1, 2];
-  const ci = choices[(Math.random() * choices.length) | 0]!;
+  const ci = choices[(rng() * choices.length) | 0]!;
   return { colorIdx: ci, char: M.charFor(ci) };
 };
 
-export const randomRow = (fill: number): Array<Bubble | null> => {
+export const randomRow = (
+  state: GameState,
+  fill: number,
+  rng: () => number = Math.random,
+): Array<Bubble | null> => {
   const M = requireM();
   const row: Array<Bubble | null> = new Array(state.slotCols);
   for (let i = 0; i < row.length; i++) {
-    if (Math.random() < fill) {
-      const ci = (Math.random() * NUM_COLORS) | 0;
+    if (rng() < fill) {
+      const ci = (rng() * NUM_COLORS) | 0;
       row[i] = { colorIdx: ci, char: M.charFor(ci) };
     } else {
       row[i] = null;
@@ -33,12 +37,12 @@ export const randomRow = (fill: number): Array<Bubble | null> => {
   return row;
 };
 
-export const reset = (): void => {
+export const reset = (state: GameState, rng: () => number = Math.random): void => {
   state.grid = [];
-  for (let j = 0; j < INITIAL_ROWS; j++) state.grid.push(randomRow(1));
+  for (let j = 0; j < INITIAL_ROWS; j++) state.grid.push(randomRow(state, 1, rng));
   state.shooter.angle = -Math.PI / 2;
-  state.shooter.current = makeBubble();
-  state.shooter.next = makeBubble();
+  state.shooter.current = makeBubble(state, rng);
+  state.shooter.next = makeBubble(state, rng);
   state.projectile = null;
   state.shotsSinceDescent = 0;
   state.shotsPerDescent = INITIAL_SHOTS_PER_DESCENT;
@@ -49,13 +53,13 @@ export const reset = (): void => {
   state.activeBurst = null;
 };
 
-const descentRowFill = (): number =>
+const descentRowFill = (state: GameState): number =>
   Math.min(1, NEW_ROW_FILL_BASE + (state.level - 1) * NEW_ROW_FILL_PER_LEVEL);
 
 // Shared level bump used by both descents and refills, so clearing the
 // playfield is progression instead of resetting the difficulty knob like it
 // used to. Banner runs through the existing point-burst pipeline.
-const advanceLevel = (): void => {
+const advanceLevel = (state: GameState): void => {
   state.level++;
   if (state.shotsPerDescent > MIN_SHOTS_PER_DESCENT && state.level % 2 === 0) {
     state.shotsPerDescent--;
@@ -63,13 +67,13 @@ const advanceLevel = (): void => {
   if (state.M) addPointBurst(state, '◇ level ' + state.level, state.M.titleColor(), 'level');
 };
 
-export const descend = (): void => {
-  advanceLevel();
-  state.grid.unshift(randomRow(descentRowFill()));
+export const descend = (state: GameState, rng: () => number = Math.random): void => {
+  advanceLevel(state);
+  state.grid.unshift(randomRow(state, descentRowFill(state), rng));
   dropFloaters(state);
 };
 
-export const refillIfEmpty = (): boolean => {
+export const refillIfEmpty = (state: GameState, rng: () => number = Math.random): boolean => {
   let any = false;
   for (let j = 0; j < state.grid.length && !any; j++) {
     const row = state.grid[j]!;
@@ -77,8 +81,8 @@ export const refillIfEmpty = (): boolean => {
   }
   if (any) return false;
   state.grid = [];
-  for (let j = 0; j < REFILL_ROWS; j++) state.grid.push(randomRow(1));
+  for (let j = 0; j < REFILL_ROWS; j++) state.grid.push(randomRow(state, 1, rng));
   state.shotsSinceDescent = 0;
-  advanceLevel();
+  advanceLevel(state);
   return true;
 };
