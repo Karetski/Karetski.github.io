@@ -60,7 +60,7 @@ const advanceLevel = (): void => {
   if (state.shotsPerDescent > MIN_SHOTS_PER_DESCENT && state.level % 2 === 0) {
     state.shotsPerDescent--;
   }
-  if (state.M) addPointBurst('◇ level ' + state.level, state.M.titleColor(), 'level');
+  if (state.M) addPointBurst(state, '◇ level ' + state.level, state.M.titleColor(), 'level');
 };
 
 export const descend = (): void => {

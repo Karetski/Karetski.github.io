@@ -120,14 +120,14 @@ const snapAndResolve = (): void => {
       // and ONE score addition for the whole shot.
       totalEarned += totalPopped * 2;
       state.score += totalEarned;
-      addPointBurst('✦ +' + totalEarned + ' combo', M.titleColor(), 'combo');
+      addPointBurst(state, '✦ +' + totalEarned + ' combo', M.titleColor(), 'combo');
       // Flash the bg around the playfield with the un-dampened (index-page)
       // palette for a beat — duration scales with chain size so big combos
       // hold the celebration longer.
       M.flashBackground(Math.min(700, 280 + totalPopped * 25));
     } else if (waves === 1 && lastBurstColor) {
       state.score += totalEarned;
-      addPointBurst('+' + totalEarned, lastBurstColor);
+      addPointBurst(state, '+' + totalEarned, lastBurstColor);
     }
   }
   state.projectile = null;
@@ -141,7 +141,7 @@ const snapAndResolve = (): void => {
 
 export const tick = (dt: number): void => {
   tickPops();
-  tickBurst();
+  tickBurst(state);
   if (state.gameOver || !state.projectile) return;
   state.projectile.x += state.projectile.vx * dt;
   state.projectile.y += state.projectile.vy * dt;

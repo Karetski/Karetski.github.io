@@ -153,7 +153,7 @@ export const dropFloaters = (): void => {
   const pts = cells.length * 3;
   popGroup(cells, 'float');
   state.score += pts;
-  addPointBurst('+' + pts, requireM().linkColor());
+  addPointBurst(state, '+' + pts, requireM().linkColor());
 };
 
 export const checkLose = (): void => {
