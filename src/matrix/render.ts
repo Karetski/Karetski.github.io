@@ -6,6 +6,7 @@ import { getThemeColors } from './theme';
 import { drawBoxChar } from './box-chars';
 import { stepPointer } from './pointer';
 import { desaturate, dimToBg } from '../shared/math';
+import { getFlashRenderParams } from './flash';
 
 export const updateAndDrawGrid = (gctx: CanvasRenderingContext2D, now: number): void => {
   const { config, cells, cellW, cellH, cols, rows } = state;
@@ -27,16 +28,14 @@ export const updateAndDrawGrid = (gctx: CanvasRenderingContext2D, now: number): 
   // no residue once the envelope returns to 0. One extra cleanup frame is
   // forced when intensity drops to 0 so cells repaint with their plain
   // stored colour on the way out.
-  const flashActive  = state.flash.intensity > 0.001;
-  const flashCleanup = !flashActive && state.flash.wasActive;
-  state.flash.wasActive = flashActive;
-  const flashBaseP   = (flashActive || flashCleanup)
-    ? (state.isLightMode ? config.paletteLight : config.paletteDark)
-    : null;
+  const flash = getFlashRenderParams();
+  const flashActive  = flash.active;
+  const flashCleanup = flash.cleanup;
+  const flashBaseP   = flash.baseP;
   // Outer cells flip faster during the flash so the field genuinely churns
   // in sync with the lit-up palette — a static recolor reads as a slab,
   // accelerated turnover reads alive.
-  const flashFlipMul = flashActive ? 1 + state.flash.intensity * 6 : 1;
+  const flashFlipMul = flash.flipMul;
   // Aging + radial fade run in both modes. In play mode they compose with
   // the per-palette desat/dim — cells start from the play palette (already
   // pre-dimmed) and age further toward the theme bg, so the field reads
@@ -102,7 +101,7 @@ export const updateAndDrawGrid = (gctx: CanvasRenderingContext2D, now: number): 
         const flashThisCell = flashActive && !inPlay;
         if (flashThisCell && flashBaseP) {
           const v = flashBaseP[cell.colorIndex]!;
-          const t = state.flash.intensity;
+          const t = flash.intensity;
           baseColor = [
             cell.color[0]! + (v[0] - cell.color[0]!) * t,
             cell.color[1]! + (v[1] - cell.color[1]!) * t,
