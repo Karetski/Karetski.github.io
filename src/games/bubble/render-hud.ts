@@ -4,7 +4,7 @@ import type { WriteBuf } from './render-bubbles';
 
 export const renderHud = (buf: WriteBuf): void => {
   if (state.gameOver) return;
-  const M = requireM();
+  const M = requireM(state);
   const frameColor = M.titleColor();
   const sepColor   = M.sepColor();
   const link       = M.linkColor();

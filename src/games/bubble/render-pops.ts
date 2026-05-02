@@ -5,7 +5,7 @@ import type { WriteBuf } from './render-bubbles';
 
 export const renderPops = (buf: WriteBuf): void => {
   if (!state.popping.length) return;
-  const M = requireM();
+  const M = requireM(state);
   const now = performance.now();
   const isLight = M.isLight;
   const bg = isLight ? 255 : 0;

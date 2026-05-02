@@ -12,7 +12,7 @@ export interface WriteBuf {
 }
 
 export const renderBubbles = (buf: WriteBuf): void => {
-  const M = requireM();
+  const M = requireM(state);
   for (let j = 0; j < state.grid.length; j++) {
     for (let i = 0; i < state.slotCols; i++) {
       const cell = state.grid[j]![i];
@@ -26,7 +26,7 @@ export const renderBubbles = (buf: WriteBuf): void => {
 
 export const renderProjectile = (buf: WriteBuf): void => {
   if (!state.projectile) return;
-  const M = requireM();
+  const M = requireM(state);
   const col = Math.floor(state.projectile.x / state.cellW);
   const row = Math.floor(state.projectile.y / state.cellH);
   buf.put(col, row, state.projectile.char, M.vividColor(state.projectile.colorIdx));
@@ -34,7 +34,7 @@ export const renderProjectile = (buf: WriteBuf): void => {
 
 export const renderGameOver = (buf: WriteBuf): void => {
   if (!state.gameOver) return;
-  const M = requireM();
+  const M = requireM(state);
   const link = M.linkColor();
   const msg = `score ${state.score} — click to restart`;
   const startCol = Math.max(0, Math.floor((state.cols - msg.length) / 2));

@@ -177,7 +177,7 @@ export const dropFloaters = (state: GameState): void => {
   const pts = cells.length * 3;
   popGroup(state, cells, 'float');
   state.score += pts;
-  addPointBurst(state, '+' + pts, requireM().linkColor());
+  addPointBurst(state, '+' + pts, requireM(state).linkColor());
 };
 
 // Pure: returns true if any bubble's centre y crosses dangerY.

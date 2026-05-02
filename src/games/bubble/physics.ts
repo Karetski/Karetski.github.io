@@ -123,7 +123,7 @@ const collisionAt = (state: GameState): boolean => {
 };
 
 const snapAndResolve = (state: GameState, rng: () => number): void => {
-  const M = requireM();
+  const M = requireM(state);
   const p = state.projectile!;
   const slot = findSnapSlot(
     state.grid, state.slotCols,

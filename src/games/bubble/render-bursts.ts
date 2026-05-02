@@ -7,7 +7,7 @@ import type { WriteBuf } from './render-bubbles';
 export const renderBursts = (buf: WriteBuf): void => {
   if (!state.activeBurst) return;
   const pb = state.activeBurst;
-  const M = requireM();
+  const M = requireM(state);
   const dur = burstDuration(pb.kind);
   const now = performance.now();
   const elapsed = now - pb.tStart;

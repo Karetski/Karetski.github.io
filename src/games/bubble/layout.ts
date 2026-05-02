@@ -9,7 +9,7 @@ export const sectionWidths = (totalW: number, count: number): number[] => {
 };
 
 export const computeLayout = (): void => {
-  const M = requireM();
+  const M = requireM(state);
   state.cols = M.cols;
   state.rows = M.rows;
   state.cellW = M.cellW;

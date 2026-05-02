@@ -4,7 +4,7 @@ import type { WriteBuf } from './render-bubbles';
 
 export const renderAim = (buf: WriteBuf): void => {
   if (state.gameOver || !state.shooter.current) return;
-  const M = requireM();
+  const M = requireM(state);
   const aimColor = M.vividColor(state.shooter.current.colorIdx);
   const ceilingPx = state.startSlotRow * state.cellH;
   const subW = state.cellW / 2;

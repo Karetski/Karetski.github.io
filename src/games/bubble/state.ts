@@ -109,7 +109,7 @@ export const state: GameState = {
   activeBurst: null,
 };
 
-export const requireM = (): MatrixGame => {
-  if (!state.M) throw new Error('matrixGame not yet initialised');
-  return state.M;
+export const requireM = (s: GameState): MatrixGame => {
+  if (!s.M) throw new Error('matrixGame not yet initialised');
+  return s.M;
 };

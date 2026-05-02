@@ -11,7 +11,7 @@ import { renderBursts } from './render-bursts';
 import { renderAim } from './render-aim';
 
 export const render = (): void => {
-  const M = requireM();
+  const M = requireM(state);
   const writes = new Map<string, { char: string; color: number[] | readonly number[] }>();
   const buf: WriteBuf = {
     put: (col, row, char, color) => {

@@ -8,7 +8,7 @@ export const ensureRow = (state: GameState, j: number): void => {
 };
 
 export const makeBubble = (state: GameState, rng: () => number = Math.random): Bubble => {
-  const M = requireM();
+  const M = requireM(state);
   const present = new Set<number>();
   for (let j = 0; j < state.grid.length; j++) {
     const row = state.grid[j]!;
@@ -24,7 +24,7 @@ export const randomRow = (
   fill: number,
   rng: () => number = Math.random,
 ): Array<Bubble | null> => {
-  const M = requireM();
+  const M = requireM(state);
   const row: Array<Bubble | null> = new Array(state.slotCols);
   for (let i = 0; i < row.length; i++) {
     if (rng() < fill) {
