@@ -5,7 +5,7 @@ import { smoothstep } from '../shared/math';
 export interface FlashRenderParams {
   active: boolean;
   cleanup: boolean;
-  baseP: ReadonlyArray<RGB | readonly number[]> | null;
+  baseP: readonly [RGB, RGB, RGB] | null;
   flipMul: number;
   intensity: number;
 }
@@ -35,7 +35,7 @@ export const flashBackground = (durationMs: number): void => {
 
 export const getFlashIntensity = (): number => state.flash.intensity;
 
-export const getFlashRenderParams = (): FlashRenderParams => {
+export const consumeFlashRenderParams = (): FlashRenderParams => {
   const f = state.flash;
   const active = f.intensity > 0.001;
   const cleanup = !active && f.wasActive;

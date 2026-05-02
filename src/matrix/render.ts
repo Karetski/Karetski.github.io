@@ -6,7 +6,7 @@ import { getThemeColors } from './theme';
 import { drawBoxChar } from './box-chars';
 import { stepPointer } from './pointer';
 import { desaturate, dimToBg } from '../shared/math';
-import { getFlashRenderParams } from './flash';
+import { consumeFlashRenderParams } from './flash';
 
 export const updateAndDrawGrid = (gctx: CanvasRenderingContext2D, now: number): void => {
   const { config, cells, cellW, cellH, cols, rows } = state;
@@ -28,7 +28,7 @@ export const updateAndDrawGrid = (gctx: CanvasRenderingContext2D, now: number): 
   // no residue once the envelope returns to 0. One extra cleanup frame is
   // forced when intensity drops to 0 so cells repaint with their plain
   // stored colour on the way out.
-  const flash = getFlashRenderParams();
+  const flash = consumeFlashRenderParams();
   const flashActive  = flash.active;
   const flashCleanup = flash.cleanup;
   const flashBaseP   = flash.baseP;
