@@ -14,7 +14,7 @@ export interface GridMetrics {
   naturalCellW: number;
 }
 
-export const initGrid = (crt: CRTPipeline): GridMetrics => {
+export const initGrid = (crt: CRTPipeline, prevGeometryKey: string | null): GridMetrics => {
   const { gctx, gridCanvas, screenCanvas } = crt;
   document.documentElement.classList.toggle('light', state.isLightMode);
   state.dpr = window.devicePixelRatio || 1;
@@ -49,6 +49,11 @@ export const initGrid = (crt: CRTPipeline): GridMetrics => {
 
   state.cols = Math.floor(W / state.cellW);
   state.rows = Math.floor(H / state.cellH);
+
+  const geometryKey = `${state.cellW}:${state.cellH}:${state.cols}:${state.rows}`;
+  if (geometryKey === prevGeometryKey) {
+    return { W, H, naturalCellW };
+  }
 
   const now = performance.now();
   const palette = getPalette();
