@@ -1,35 +1,33 @@
-import type { MatrixGame } from '../../src/shared/types';
-import type { GameState } from '../../src/games/bubble/state';
+import type { GameDeps } from '../../src/apps/bubble-game/deps';
+import type { GameState } from '../../src/apps/bubble-game/state';
+import type { ThemeSnapshot } from '../../src/framework/theme/types';
+import { defaultConfig } from '../../src/framework/theme/config';
 
 const NOOP = (): void => {};
 
-export const makeFakeMatrix = (overrides: Partial<MatrixGame> = {}): MatrixGame => ({
-  isPlayMode: true,
-  cols: 80,
-  rows: 40,
-  cellW: 10,
-  cellH: 18,
+const fakeTheme = (): ThemeSnapshot => ({
+  mode: 'dark',
   isLight: false,
+  bg: '#000',
+  bgLevel: 0,
+  title: [255, 255, 255],
+  link: [70, 130, 255],
+  frame: [255, 255, 255],
+  sep: [80, 80, 80],
+  vivid: defaultConfig.paletteDark,
+  config: defaultConfig,
+});
+
+export const makeFakeDeps = (overrides: Partial<GameDeps> = {}): GameDeps => ({
   numColors: 3,
-  panelLeft: 5,
-  panelWidth: 20,
-  panelTop: 30,
-  vividColor: () => [255, 0, 0],
-  linkColor: () => [0, 255, 0],
-  titleColor: () => [255, 255, 255],
-  sepColor: () => [128, 128, 128],
   charFor: (i: number) => ['A', 'B', 'C'][i % 3]!,
-  setCell: NOOP,
-  clearCell: NOOP,
-  isLocked: () => false,
-  setPlayfieldBounds: NOOP,
-  on: NOOP,
+  theme: fakeTheme,
   flashBackground: NOOP,
   ...overrides,
 });
 
 export const makeState = (overrides: Partial<GameState> = {}): GameState => {
-  const M = overrides.M ?? makeFakeMatrix();
+  const M = overrides.M ?? makeFakeDeps();
   return {
     M,
     cols: 80,
@@ -61,7 +59,6 @@ export const makeState = (overrides: Partial<GameState> = {}): GameState => {
     gameOver: false,
     pointerX: 0,
     pointerY: 0,
-    lastWritten: new Set(),
     popping: [],
     activeBurst: null,
     ...overrides,

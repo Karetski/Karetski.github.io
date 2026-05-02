@@ -3,8 +3,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "bun build ./src/index.ts ./src/play-bubble.ts --outdir dist --target browser --minify",
-    "dev": "bun build ./src/index.ts ./src/play-bubble.ts --outdir dist --target browser --watch",
+    "build": "bun build ./src/pages/home.ts ./src/pages/play-bubble.ts --outdir dist --target browser --minify",
+    "dev": "bun build ./src/pages/home.ts ./src/pages/play-bubble.ts --outdir dist --target browser --watch",
     "typecheck": "tsc --noEmit",
     "test": "bun test",
     "verify": "bun scripts/verify.ts"
