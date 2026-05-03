@@ -1,5 +1,5 @@
 export const SAT_LEVELS = 12;
-export const RIPPLE_RADIUS = 180;
+export const RIPPLE_RADIUS = 120;
 export const TRAIL_TAU = 700;
 
 export const NOISE_TIME_BASE = 0.0002;
