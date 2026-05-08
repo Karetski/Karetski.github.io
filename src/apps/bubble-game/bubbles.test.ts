@@ -113,6 +113,38 @@ describe('descend pattern transition', () => {
       expect(prevTop[5]).not.toBeNull();
     }
   });
+
+  // Regression: when prevTop holds multiple disconnected interior
+  // components (think the `columns` pattern's stripes [0,1,_,3,4,_,6,7,_,_]),
+  // the previous bridge only seeded ONE anchor and the other interior
+  // components dropped as floaters mid-stack — visible as bubbles vanishing
+  // far from the freshly added line.
+  test('preserves every interior component in prevTop across a transition', () => {
+    for (let seed = 0; seed < 64; seed++) {
+      const cell = { colorIdx: 0, char: 'A' };
+      const stripeRow = () => {
+        const r: Array<{ colorIdx: number; char: string } | null> = new Array(10).fill(null);
+        r[3] = cell; r[4] = cell;
+        r[6] = cell; r[7] = cell;
+        return r;
+      };
+      const state = makeState({
+        slotCols: 10,
+        grid: [stripeRow(), stripeRow(), stripeRow()],
+        // Force a transition by exhausting the active pattern; same-kind
+        // exclusion picks something other than dna, so the new top can land
+        // disjoint from interior stripes.
+        pattern: { kind: 'dna', step: 10, length: 10, params: { thickness: 4 } },
+      });
+      descend(state, mulberry32(seed));
+      const prevTop = state.grid[1]!;
+      // Both interior stripes survived the descent's dropFloaters pass.
+      expect(prevTop[3]).not.toBeNull();
+      expect(prevTop[4]).not.toBeNull();
+      expect(prevTop[6]).not.toBeNull();
+      expect(prevTop[7]).not.toBeNull();
+    }
+  });
 });
 
 describe('refillIfEmpty', () => {

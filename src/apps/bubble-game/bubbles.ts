@@ -42,9 +42,13 @@ export const randomRow = (
 // one filled column, but the first row of a *new* pattern can land disjoint
 // from the previous top row. When that happens, descending strips the previous
 // pattern's only ceiling anchor and dropFloaters() wipes the whole stack out.
-// Splice in a single connector cell at any column where the previous top has
-// a bubble — that's enough to keep the previous pattern's internal row chain
-// anchored, and it leaves every subsequent row of the new pattern untouched.
+//
+// Walk prevTop's horizontal connected components. A component touching col 0
+// or col W-1 is wall-anchored and needs nothing. Every other component must
+// share at least one column with the new row, otherwise its entire vertical
+// stack loses its only anchor. Bridge each interior component independently
+// — sparse patterns like `columns` produce multiple disconnected stripes per
+// row, and a single connector only saves the first one.
 const bridgeAcrossTransition = (
   state: GameState,
   newRow: Array<Bubble | null>,
@@ -52,11 +56,22 @@ const bridgeAcrossTransition = (
   rng: () => number,
 ): void => {
   const W = Math.min(newRow.length, prevTop.length);
-  for (let i = 0; i < W; i++) if (newRow[i] && prevTop[i]) return;
-  for (let i = 0; i < W; i++) {
-    if (prevTop[i] && !newRow[i]) {
-      newRow[i] = makeBubble(state, rng);
-      return;
+  if (W === 0) return;
+  let i = 0;
+  while (i < W) {
+    if (!prevTop[i]) { i++; continue; }
+    const start = i;
+    while (i < W && prevTop[i]) i++;
+    const end = i;
+    if (start === 0 || end === W) continue;
+    let overlapped = false;
+    for (let k = start; k < end; k++) if (newRow[k]) { overlapped = true; break; }
+    if (overlapped) continue;
+    for (let k = start; k < end; k++) {
+      if (!newRow[k]) {
+        newRow[k] = makeBubble(state, rng);
+        break;
+      }
     }
   }
 };
