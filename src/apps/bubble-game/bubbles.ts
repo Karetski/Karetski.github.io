@@ -1,7 +1,6 @@
 import { INITIAL_ROWS, INITIAL_SHOTS_PER_DESCENT, MIN_SHOTS_PER_DESCENT, NUM_COLORS, REFILL_ROWS } from './constants';
 import { type Bubble, type GameState, requireM } from './state';
 import { addPointBurst } from './bursts';
-import { dropFloaters } from './matching';
 import { patternRow, pickPattern } from './patterns';
 
 export const ensureRow = (state: GameState, j: number): void => {
@@ -92,7 +91,6 @@ export const descend = (state: GameState, rng: () => number = Math.random): void
   // shift them down to stay anchored to the bubbles they came from. Without
   // this, mid-flight match/float pops appear one row above their stack.
   for (let i = 0; i < state.popping.length; i++) state.popping[i]!.row++;
-  dropFloaters(state);
 };
 
 export const refillIfEmpty = (state: GameState, rng: () => number = Math.random): boolean => {

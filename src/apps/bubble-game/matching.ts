@@ -1,6 +1,5 @@
 import { NEIGHBORS, POP_DURATION_MS, type PopKind } from './constants';
-import { type GameGrid, type GameState, requireM } from './state';
-import { addPointBurst } from './bursts';
+import { type GameGrid, type GameState } from './state';
 
 const slotToCell = (state: GameState, i: number, j: number) => ({
   col: state.startSlotCol + i,
@@ -167,17 +166,6 @@ export const collectFloaters = (
     }
   }
   return out;
-};
-
-// Standalone floater drop used by descend(): pops, scores and emits a burst,
-// but doesn't participate in combo accounting (descents aren't shot-driven).
-export const dropFloaters = (state: GameState): void => {
-  const cells = collectFloaters(state.grid, state.slotCols);
-  if (!cells.length) return;
-  const pts = cells.length * 3;
-  popGroup(state, cells, 'float');
-  state.score += pts;
-  addPointBurst(state, '+' + pts, requireM(state).theme().link);
 };
 
 // Pure: returns true if any bubble's centre y crosses dangerY.

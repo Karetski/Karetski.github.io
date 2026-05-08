@@ -144,6 +144,16 @@ const snapAndResolve = (state: GameState, rng: () => number): void => {
     let lastBurstColor: number[] | readonly number[] | null = null;
     let totalEarned = 0;
     if (matchCells.length) {
+      // Cells already disconnected from the ceiling before this shot are
+      // grandfathered in (typically descent-orphans we left behind on
+      // purpose). Wave 2 should only sweep cells the match itself knocks
+      // loose, so snapshot the pre-existing floater set first.
+      const preFloat = new Set<string>();
+      const preCells = collectFloaters(state.grid, state.slotCols);
+      for (let k = 0; k < preCells.length; k++) {
+        preFloat.add(preCells[k]![0] + ',' + preCells[k]![1]);
+      }
+
       const matchPts = matchCells.length + Math.max(0, matchCells.length - 3) * 2;
       popGroup(state, matchCells, 'match');
       totalEarned += matchPts;
@@ -151,8 +161,10 @@ const snapAndResolve = (state: GameState, rng: () => number): void => {
       lastBurstColor = M.theme().title;
       waves++;
 
-      // Wave 2 — floaters knocked loose by the match.
-      const floatCells = collectFloaters(state.grid, state.slotCols);
+      // Wave 2 — floaters knocked loose by the match (excluding pre-existing
+      // disconnected groups carried over from descents).
+      const floatCells = collectFloaters(state.grid, state.slotCols)
+        .filter(([i, j]) => !preFloat.has(i + ',' + j));
       if (floatCells.length) {
         const floatPts = floatCells.length * 3;
         popGroup(state, floatCells, 'float');
