@@ -14,6 +14,7 @@ import {
   bubblesComponent,
   gameOverComponent,
   projectileComponent,
+  wallsComponent,
 } from './components/bubbles';
 import { CHARSETS } from '../matrix-background/constants';
 
@@ -28,6 +29,7 @@ export const createBubbleGameScene = (): Scene => {
   let started = false;
 
   const components: Component[] = [
+    wallsComponent,
     bubblesComponent,
     hudComponent,
     popComponent,

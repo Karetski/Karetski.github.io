@@ -137,7 +137,9 @@ export const collectMatch = (
   return out;
 };
 
-// Returns [[i, j], ...] of bubbles disconnected from the ceiling row.
+// Returns [[i, j], ...] of bubbles disconnected from the ceiling or the
+// left/right walls. Walls are anchors too, so a column of bubbles hugging
+// the edge stays put even if the row above it has been cleared.
 export const collectFloaters = (
   grid: GameGrid,
   slotCols: number,
@@ -145,8 +147,17 @@ export const collectFloaters = (
   if (!grid.length || !grid[0]) return [];
   const reachable = new Set<string>();
   const stack: Array<[number, number]> = [];
-  for (let i = 0; i < slotCols; i++) {
-    if (grid[0]![i]) { reachable.add(i + ',0'); stack.push([i, 0]); }
+  const seed = (i: number, j: number) => {
+    const key = i + ',' + j;
+    if (reachable.has(key)) return;
+    if (!grid[j]?.[i]) return;
+    reachable.add(key);
+    stack.push([i, j]);
+  };
+  for (let i = 0; i < slotCols; i++) seed(i, 0);
+  for (let j = 0; j < grid.length; j++) {
+    seed(0, j);
+    if (slotCols > 1) seed(slotCols - 1, j);
   }
   while (stack.length) {
     const [ci, cj] = stack.pop()!;

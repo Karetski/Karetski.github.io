@@ -82,21 +82,37 @@ describe('collectFloaters', () => {
     expect(collectFloaters(grid, 2)).toEqual([]);
   });
 
-  test('chain not connected to top floats', () => {
+  test('mid-column bubble with no anchor floats', () => {
     const grid: GameGrid = [
-      [null, null],
-      [b(0), null],
+      [null, null, null],
+      [null, b(0), null],
     ];
-    expect(collectFloaters(grid, 2)).toEqual([[0, 1]]);
+    expect(collectFloaters(grid, 3)).toEqual([[1, 1]]);
   });
 
-  test('all-floating grid returns all bubbles', () => {
+  test('left wall anchors a bubble even with empty row above', () => {
     const grid: GameGrid = [
-      [null, null],
-      [b(0), b(1)],
+      [null, null, null],
+      [b(0), null, null],
     ];
-    const out = sortPairs(collectFloaters(grid, 2));
-    expect(out).toEqual([[0, 1], [1, 1]]);
+    expect(collectFloaters(grid, 3)).toEqual([]);
+  });
+
+  test('right wall anchors a bubble even with empty row above', () => {
+    const grid: GameGrid = [
+      [null, null, null],
+      [null, null, b(0)],
+    ];
+    expect(collectFloaters(grid, 3)).toEqual([]);
+  });
+
+  test('mid-column chain dangling between walls floats', () => {
+    const grid: GameGrid = [
+      [null, null,  null, null, null],
+      [null, b(0),  b(0), b(0), null],
+    ];
+    const out = sortPairs(collectFloaters(grid, 5));
+    expect(out).toEqual([[1, 1], [2, 1], [3, 1]]);
   });
 });
 

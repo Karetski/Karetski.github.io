@@ -9,6 +9,26 @@ const slotToCell = (i: number, j: number) => ({
   row: state.startSlotRow + j,
 });
 
+// Outer playfield frame: top horizontal at row 0 and side walls down to the
+// HUD's top row, sharing column edges with the HUD/buttons panels so the
+// whole stack reads as a single closed perimeter.
+export const wallsComponent: Component = {
+  paint: ({ cells, theme }) => {
+    if (state.gameOver) return;
+    const hudTop = state.panelTop - 5;
+    if (hudTop <= 0 || state.panelWidth <= 1) return;
+    const left  = state.panelLeft;
+    const right = state.panelLeft + state.panelWidth - 1;
+    cells.put(left,  0, '╔', theme.frame);
+    cells.put(right, 0, '╗', theme.frame);
+    for (let c = left + 1; c < right; c++) cells.put(c, 0, '═', theme.frame);
+    for (let r = 1; r < hudTop; r++) {
+      cells.put(left,  r, '║', theme.frame);
+      cells.put(right, r, '║', theme.frame);
+    }
+  },
+};
+
 export const bubblesComponent: Component = {
   paint: ({ cells, theme }) => {
     for (let j = 0; j < state.grid.length; j++) {

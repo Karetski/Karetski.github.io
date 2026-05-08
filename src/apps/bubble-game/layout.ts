@@ -24,13 +24,14 @@ export const computeBubbleLayout = (
   state.panelWidth = panel.width;
   state.panelTop   = panel.row;
 
-  // Playfield exactly matches the bottom buttons panel width — same left edge,
-  // same right edge, no in-between gaps because slots are 1 cell.
-  state.slotCols     = state.panelWidth;
-  state.startSlotCol = state.panelLeft;
-  // Bubbles run flush with the canvas top: HUD + lower status panel sit
-  // beneath the playfield instead of above it.
-  state.startSlotRow = 0;
+  // Playfield perimeter matches the bottom buttons panel width. The two
+  // outermost columns are reserved for the visible side walls (closing the
+  // outer loop with the HUD frame), so playable slots are panelWidth - 2.
+  state.slotCols     = Math.max(0, state.panelWidth - 2);
+  state.startSlotCol = state.panelLeft + 1;
+  // Bubbles run flush with the top horizontal of the playfield frame: HUD +
+  // lower status panel sit beneath the playfield instead of above it.
+  state.startSlotRow = 1;
 
   // One merged 5-row panel sitting directly on top of the bottom-button
   // frame: HUD inner row up top (queue|current|score), shared border with
@@ -52,10 +53,13 @@ export const computeBubbleLayout = (
   state.levelSectW    = state.panelLeft + state.panelWidth - state.levelSectLeft;
   state.lowerInnerRow = hudTop + 3;
 
+  // Region covers the full perimeter (panel width, all rows above the HUD)
+  // so the matrix-background's dampened palette extends behind the walls,
+  // not just behind the playable slots.
   return {
-    col: state.startSlotCol,
+    col: state.panelLeft,
     row: 0,
-    width: state.slotCols,
+    width: state.panelWidth,
     height: hudTop,
   };
 };

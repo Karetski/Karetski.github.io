@@ -25,8 +25,10 @@ export const hudComponent: Component = {
     for (let x = 0; x < state.panelWidth; x++) {
       const col = state.panelLeft + x;
       let topCh = '═', botCh = '═';
-      if (x === 0) { topCh = '╔'; botCh = '╚'; }
-      else if (x === state.panelWidth - 1) { topCh = '╗'; botCh = '╝'; }
+      // ╠ / ╣ at the top so the playfield walls drop into the HUD frame as
+      // a single continuous perimeter rather than two stacked boxes.
+      if (x === 0) { topCh = '╠'; botCh = '╚'; }
+      else if (x === state.panelWidth - 1) { topCh = '╣'; botCh = '╝'; }
       cells.put(col, hudTop, topCh, frameColor);
       cells.put(col, botRow, botCh, frameColor);
     }
