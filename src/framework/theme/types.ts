@@ -12,6 +12,7 @@ export interface MatrixConfig {
   colorBias: number;
   brightnessVar: number;
   agingHalfLife: number;
+  agingFloor: number;
   centerFade: number;
   centerFadeNoise: number;
 

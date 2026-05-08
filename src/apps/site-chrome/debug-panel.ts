@@ -110,6 +110,7 @@ export const setupDebugPanel = (
   slider('color bias',     'colorBias',     0,    0.5,  0.01,  onConfigChange);
   slider('brightness var', 'brightnessVar', 0,    1,    0.05,  onConfigChange);
   slider('aging half-life','agingHalfLife', 0,    10,   0.1);
+  slider('aging floor',    'agingFloor',    0,    1,    0.01);
   slider('center fade',    'centerFade',      0, 1,    0.02, onConfigChange);
   slider('fade diffusion', 'centerFadeNoise', 0, 0.5,  0.01, onConfigChange);
 

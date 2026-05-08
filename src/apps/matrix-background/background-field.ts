@@ -80,6 +80,11 @@ export class BackgroundField {
     const config = theme.config;
     const playfield = layout.regions.get('playfield');
     const now = performance.now();
+    // Spread initial flipTime across several half-lives so cells start
+    // distributed across the aging curve. Without this, every cell gets
+    // flipTime=now and the entire field pulses bright→dim in lockstep on
+    // page load and theme change.
+    const staggerMax = Math.max(0, config.agingHalfLife) * 5000;
     const next: FieldCell[] = new Array(cols * rows);
 
     for (let i = 0; i < next.length; i++) {
@@ -99,7 +104,7 @@ export class BackgroundField {
         color,
         colorStr: colorToStr(color),
         heat: 0,
-        flipTime: now,
+        flipTime: now - Math.random() * staggerMax,
         satLevel: SAT_LEVELS,
         distNorm,
         fadeNoise,
@@ -115,7 +120,9 @@ export class BackgroundField {
     const playfield = layout.regions.get('playfield');
     const innerP = this.pickPalette(theme, true);
     const outerP = this.pickPalette(theme, false);
-    const now = performance.now();
+    // Preserve flipTime/satLevel — a theme change should swap colors in
+    // place, not reset every cell to full saturation (which would flash
+    // the field bright→dim again).
     for (let i = 0; i < this.cells.length; i++) {
       const cell = this.cells[i]!;
       const r = (i / cols) | 0;
@@ -124,8 +131,6 @@ export class BackgroundField {
       const palette = inPlay ? innerP : outerP;
       cell.color = applyBrightness(palette[cell.colorIndex]!, config.brightnessVar);
       cell.colorStr = colorToStr(cell.color);
-      cell.flipTime = now;
-      cell.satLevel = SAT_LEVELS;
       cell.visibility = computeVisibility(cell.distNorm, cell.fadeNoise, config.centerFade, config.centerFadeNoise);
     }
   }
@@ -191,6 +196,8 @@ export class BackgroundField {
 
     const agingActive = config.agingHalfLife > 0;
     const agingDecay = agingActive ? 1 / (config.agingHalfLife * 1000) : 0;
+    const agingFloor = Math.max(0, Math.min(1, config.agingFloor));
+    const agingSpan = 1 - agingFloor;
     const fadeActive = config.centerFade > 0;
     const bg = theme.bgLevel;
 
@@ -233,7 +240,9 @@ export class BackgroundField {
           const factor = Math.pow(0.5, (now - cell.flipTime) * agingDecay);
           const level = Math.round(factor * SAT_LEVELS);
           if (level !== cell.satLevel) cell.satLevel = level;
-          qf = level / SAT_LEVELS;
+          // Floor compresses the aging range so aged cells stay visible
+          // and per-flip pops have less contrast against neighbors.
+          qf = agingFloor + agingSpan * (level / SAT_LEVELS);
         }
         const vis = fadeActive ? cell.visibility : 1;
         const opacity = qf * vis;

@@ -1,7 +1,7 @@
 import type { MatrixConfig } from './types';
 
 export const defaultConfig: MatrixConfig = {
-  flipRate: 0.025,
+  flipRate: 0.012,
   flipVariation: 0.35,
   noiseScale: 0.18,
   noiseSpeed: 0.6,
@@ -10,6 +10,7 @@ export const defaultConfig: MatrixConfig = {
   colorBias: 0.25,
   brightnessVar: 0,
   agingHalfLife: 2.5,
+  agingFloor: 0.45,
   centerFade: 0.85,
   centerFadeNoise: 0.22,
 
