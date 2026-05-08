@@ -61,6 +61,7 @@ export const makeState = (overrides: Partial<GameState> = {}): GameState => {
     pointerY: 0,
     popping: [],
     activeBurst: null,
+    pattern: null,
     ...overrides,
   };
 };

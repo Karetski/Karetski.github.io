@@ -1,5 +1,6 @@
 import type { GameDeps } from './deps';
 import type { BurstKind, PopKind } from './constants';
+import type { Pattern } from './patterns';
 
 export interface Bubble { colorIdx: number; char: string }
 
@@ -77,6 +78,11 @@ export interface GameState {
   // level > score) preempt anything still on screen; same- or lower-
   // priority events wait their turn.
   activeBurst: Burst | null;
+  // Active descent pattern (DNA, zigzag, columns, checker). Null between a
+  // refill/reset and the first descent. Each descent consumes one row from
+  // the pattern; when its step count is reached, descend() picks a fresh
+  // pattern of a different kind.
+  pattern: Pattern | null;
 }
 
 export const state: GameState = {
@@ -105,6 +111,7 @@ export const state: GameState = {
   pointerY: 0,
   popping: [],
   activeBurst: null,
+  pattern: null,
 };
 
 export const requireM = (s: GameState): GameDeps => {
