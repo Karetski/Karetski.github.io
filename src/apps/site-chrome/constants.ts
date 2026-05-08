@@ -2,7 +2,7 @@ export const TITLE = 'Alexey Karetski';
 
 export const TOGGLE_DARK_LABEL  = 'switch to dark';
 export const TOGGLE_LIGHT_LABEL = 'switch to light';
-export const NAV_PLAY_LABEL = 'play';
+export const NAV_PLAY_LABEL = 'bubble game';
 export const NAV_BACK_LABEL = 'back';
 
 // Root-absolute so the link works from any depth (the bubble page lives in

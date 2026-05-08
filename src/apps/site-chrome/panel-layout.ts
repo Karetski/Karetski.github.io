@@ -20,13 +20,16 @@ export interface PanelLayout {
   linkRows: number[];
   linkStartCols: number[];
 
-  buttonFrameTop: number;
-  buttonFrameH: number;
+  mergedButtons: boolean;
+  navFrameTop: number;
+  navFrameH: number;
   navRow: number;
   navStartCol: number;
   navLabel: string;
   navHref: string;
   buttonSepRow: number;
+  toggleFrameTop: number;
+  toggleFrameH: number;
   toggleRow: number;
   toggleStartCol: number;
   toggleLabel: string;
@@ -55,18 +58,21 @@ export const computePanelLayout = (layout: Layout, inputs: PanelInputs): PanelLa
   const stackW = Math.max(titleNaturalW, linksNaturalW, buttonNaturalW);
   const stackInteriorW = stackW - 2;
 
+  const mergedButtons = inputs.isPlayMode;
   const titleFrameH  = 3;
   const linkFrameH   = LINKS.length * 2 + 1;
-  const buttonFrameH = 5;
+  const navFrameH    = 3;
+  const toggleFrameH = 3;
+  const mergedButtonsH = 5;
 
   const stackLeft = Math.floor((cols - stackW) / 2);
 
   let totalH: number, groupTop: number;
   if (inputs.isPlayMode) {
-    totalH = buttonFrameH;
-    groupTop = rows - buttonFrameH;
+    totalH = mergedButtonsH;
+    groupTop = rows - totalH;
   } else {
-    totalH = titleFrameH + FRAME_GAP + linkFrameH + FRAME_GAP + buttonFrameH;
+    totalH = titleFrameH + FRAME_GAP + linkFrameH + FRAME_GAP + navFrameH + FRAME_GAP + toggleFrameH;
     groupTop = Math.floor((rows - totalH) / 2);
   }
 
@@ -76,10 +82,10 @@ export const computePanelLayout = (layout: Layout, inputs: PanelInputs): PanelLa
   let linkFrameTop: number | null = null;
   const linkRows: number[] = [];
   const linkStartCols: number[] = [];
-  let buttonFrameTop: number;
+  let navFrameTop: number;
 
   if (inputs.isPlayMode) {
-    buttonFrameTop = groupTop;
+    navFrameTop = groupTop;
   } else {
     titleFrameTop = groupTop;
     titleRow = titleFrameTop + 1;
@@ -93,22 +99,27 @@ export const computePanelLayout = (layout: Layout, inputs: PanelInputs): PanelLa
       linkRows.push(linkRow);
       linkStartCols.push(startCol);
     }
-    buttonFrameTop = linkFrameTop + linkFrameH + FRAME_GAP;
+    navFrameTop = linkFrameTop + linkFrameH + FRAME_GAP;
   }
 
-  const navRow = buttonFrameTop + 1;
+  const navRow = navFrameTop + 1;
   const navStartCol = stackLeft + 1 + Math.floor((stackInteriorW - navLabel.length) / 2);
   const buttonSepRow = navRow + 1;
-  const toggleRow = buttonSepRow + 1;
+  const toggleFrameTop = mergedButtons
+    ? navFrameTop
+    : navFrameTop + navFrameH + FRAME_GAP;
+  const toggleRow = mergedButtons ? buttonSepRow + 1 : toggleFrameTop + 1;
   const toggleStartCol = stackLeft + 1 + Math.floor((stackInteriorW - toggleLabel.length) / 2);
 
   return {
     stackLeft, stackW, groupTop, totalH,
     titleFrameTop, titleRow, titleStartCol,
     linkFrameTop, linkFrameH, linkRows, linkStartCols,
-    buttonFrameTop, buttonFrameH,
+    mergedButtons,
+    navFrameTop, navFrameH,
     navRow, navStartCol, navLabel, navHref,
     buttonSepRow,
+    toggleFrameTop, toggleFrameH,
     toggleRow, toggleStartCol, toggleLabel,
   };
 };

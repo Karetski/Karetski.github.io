@@ -39,9 +39,9 @@ export const createSiteChromeScene = (
     if (!host || !panel) return;
     host.services.setRegion('panel', {
       col: panel.stackLeft,
-      row: panel.buttonFrameTop,
+      row: panel.groupTop,
       width: panel.stackW,
-      height: panel.buttonFrameH,
+      height: panel.totalH,
     });
   };
 
@@ -101,9 +101,9 @@ export const createSiteChromeScene = (
       if (!panel) return null;
       return {
         col: panel.stackLeft,
-        row: panel.buttonFrameTop,
+        row: panel.groupTop,
         width: panel.stackW,
-        height: panel.buttonFrameH,
+        height: panel.totalH,
       };
     },
   };

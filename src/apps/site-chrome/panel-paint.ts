@@ -29,8 +29,15 @@ export const paintPanel = (
     }
   }
 
-  drawFrame(cells, panel.buttonFrameTop, panel.stackLeft, panel.stackW, panel.buttonFrameH, theme.frame);
-  writeText(cells, panel.navStartCol, panel.navRow, panel.navLabel, theme.link);
-  drawSeparator(cells, panel.buttonSepRow, panel.stackLeft, panel.stackW, theme.frame, theme.sep);
-  writeText(cells, panel.toggleStartCol, panel.toggleRow, panel.toggleLabel, theme.link);
+  if (panel.mergedButtons) {
+    drawFrame(cells, panel.navFrameTop, panel.stackLeft, panel.stackW, 5, theme.frame);
+    writeText(cells, panel.navStartCol, panel.navRow, panel.navLabel, theme.link);
+    drawSeparator(cells, panel.buttonSepRow, panel.stackLeft, panel.stackW, theme.frame, theme.sep);
+    writeText(cells, panel.toggleStartCol, panel.toggleRow, panel.toggleLabel, theme.link);
+  } else {
+    drawFrame(cells, panel.navFrameTop, panel.stackLeft, panel.stackW, panel.navFrameH, theme.frame);
+    writeText(cells, panel.navStartCol, panel.navRow, panel.navLabel, theme.link);
+    drawFrame(cells, panel.toggleFrameTop, panel.stackLeft, panel.stackW, panel.toggleFrameH, theme.frame);
+    writeText(cells, panel.toggleStartCol, panel.toggleRow, panel.toggleLabel, theme.link);
+  }
 };
