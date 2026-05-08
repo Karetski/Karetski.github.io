@@ -38,15 +38,41 @@ export const randomRow = (
   return row;
 };
 
+// Patterns guarantee that adjacent rows within the same pattern share at least
+// one filled column, but the first row of a *new* pattern can land disjoint
+// from the previous top row. When that happens, descending strips the previous
+// pattern's only ceiling anchor and dropFloaters() wipes the whole stack out.
+// Splice in a single connector cell at any column where the previous top has
+// a bubble — that's enough to keep the previous pattern's internal row chain
+// anchored, and it leaves every subsequent row of the new pattern untouched.
+const bridgeAcrossTransition = (
+  state: GameState,
+  newRow: Array<Bubble | null>,
+  prevTop: Array<Bubble | null>,
+  rng: () => number,
+): void => {
+  const W = Math.min(newRow.length, prevTop.length);
+  for (let i = 0; i < W; i++) if (newRow[i] && prevTop[i]) return;
+  for (let i = 0; i < W; i++) {
+    if (prevTop[i] && !newRow[i]) {
+      newRow[i] = makeBubble(state, rng);
+      return;
+    }
+  }
+};
+
 // Pull the next row from the active pattern, picking a new pattern (of a
 // different kind) when the current one runs out. Each pattern's `step` is
 // the row index it just emitted, so step++ moves the pattern forward.
 const nextPatternRow = (state: GameState, rng: () => number): Array<Bubble | null> => {
-  if (!state.pattern || state.pattern.step >= state.pattern.length) {
-    state.pattern = pickPattern(rng, state.pattern?.kind);
+  const transitioning = !state.pattern || state.pattern.step >= state.pattern.length;
+  const pattern = transitioning ? pickPattern(rng, state.pattern?.kind) : state.pattern!;
+  state.pattern = pattern;
+  const row = patternRow(state, pattern, rng);
+  if (transitioning && state.grid.length > 0) {
+    bridgeAcrossTransition(state, row, state.grid[0]!, rng);
   }
-  const row = patternRow(state, state.pattern, rng);
-  state.pattern.step++;
+  pattern.step++;
   return row;
 };
 

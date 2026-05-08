@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { ensureRow, makeBubble, randomRow, reset, refillIfEmpty } from './bubbles';
+import { descend, ensureRow, makeBubble, randomRow, reset, refillIfEmpty } from './bubbles';
 import { makeState } from '../../../tests/helpers/make-state';
 import { mulberry32 } from '../../../tests/helpers/seeded-rng';
 
@@ -70,6 +70,48 @@ describe('reset', () => {
     reset(state, mulberry32(0));
     expect(state.grid.length).toBeGreaterThanOrEqual(5);
     for (const row of state.grid) expect(row).toHaveLength(4);
+  });
+});
+
+describe('descend pattern transition', () => {
+  // When the active pattern exhausts and the next pattern's first row lands
+  // on columns disjoint from the previous top, the previous stack would lose
+  // its only ceiling anchor and dropFloaters would wipe it out. The
+  // transition bridge prevents that. Anchor column is interior (not 0 / not
+  // W-1) so wall-anchoring in collectFloaters can't mask the bug, and we
+  // sweep many seeds so we exercise picks that genuinely sit disjoint from
+  // the previous top.
+  test('preserves the previous top across pattern transitions for any rng seed', () => {
+    for (let seed = 0; seed < 64; seed++) {
+      const cell = { colorIdx: 0, char: 'A' };
+      const empty: Array<{ colorIdx: number; char: string } | null> = [
+        null, null, null, null, null, null, null, null, null, null,
+      ];
+      const withCellAt5 = () => {
+        const r = empty.slice();
+        r[5] = cell;
+        return r;
+      };
+      const state = makeState({
+        slotCols: 10,
+        grid: [withCellAt5(), withCellAt5(), withCellAt5()],
+        // dna is the one pattern whose first row reliably covers col 5 at
+        // W=10; excluding it via same-kind avoidance forces a pick that
+        // tends to leave col 5 empty unless the bridge intervenes.
+        pattern: { kind: 'dna', step: 10, length: 10, params: { thickness: 4 } },
+      });
+      descend(state, mulberry32(seed));
+      const newTop = state.grid[0]!;
+      const prevTop = state.grid[1]!;
+      // Invariant: at the seam between two patterns, the new top must share
+      // at least one filled column with the previous top so the older stack
+      // keeps its ceiling anchor.
+      const overlap = newTop.some((c, i) => c !== null && prevTop[i] !== null);
+      expect(overlap).toBe(true);
+      // The previous-top bubble at col 5 must still be there (i.e., wasn't
+      // dropped as a floater).
+      expect(prevTop[5]).not.toBeNull();
+    }
   });
 });
 
