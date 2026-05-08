@@ -114,6 +114,34 @@ describe('descend pattern transition', () => {
     }
   });
 
+  // Regression: a mid-pattern descent emits the next pattern step over
+  // whatever shots+pops have left in the previous top. If the prevTop has
+  // an interior cell (or component) that the new pattern row happens to
+  // miss, the cell loses its only ceiling anchor and the whole vertical
+  // chain underneath it drops — visible as bubbles vanishing anywhere in
+  // the stack on every descent, not just at pattern transitions.
+  test('preserves prev-top interior cells across mid-pattern descents', () => {
+    for (let seed = 0; seed < 16; seed++) {
+      const cell = { colorIdx: 0, char: 'A' };
+      const sparseRow = () => {
+        const r: Array<{ colorIdx: number; char: string } | null> = new Array(10).fill(null);
+        // Single interior cell at col 1; zigzag step 2 emits cols [2..7] and
+        // doesn't cover col 1, so without a per-descent bridge the whole
+        // column would float.
+        r[1] = cell;
+        return r;
+      };
+      const state = makeState({
+        slotCols: 10,
+        grid: [sparseRow(), sparseRow(), sparseRow()],
+        pattern: { kind: 'zigzag', step: 2, length: 8, params: { thickness: 6 } },
+      });
+      descend(state, mulberry32(seed));
+      const prevTop = state.grid[1]!;
+      expect(prevTop[1]).not.toBeNull();
+    }
+  });
+
   // Regression: when prevTop holds multiple disconnected interior
   // components (think the `columns` pattern's stripes [0,1,_,3,4,_,6,7,_,_]),
   // the previous bridge only seeded ONE anchor and the other interior

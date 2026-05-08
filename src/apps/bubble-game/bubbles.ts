@@ -38,18 +38,16 @@ export const randomRow = (
   return row;
 };
 
-// Patterns guarantee that adjacent rows within the same pattern share at least
-// one filled column, but the first row of a *new* pattern can land disjoint
-// from the previous top row. When that happens, descending strips the previous
-// pattern's only ceiling anchor and dropFloaters() wipes the whole stack out.
-//
-// Walk prevTop's horizontal connected components. A component touching col 0
-// or col W-1 is wall-anchored and needs nothing. Every other component must
-// share at least one column with the new row, otherwise its entire vertical
-// stack loses its only anchor. Bridge each interior component independently
-// — sparse patterns like `columns` produce multiple disconnected stripes per
-// row, and a single connector only saves the first one.
-const bridgeAcrossTransition = (
+// Walk prevTop's horizontal connected components and ensure each interior
+// component (one that doesn't touch col 0 or col W-1) shares at least one
+// column with the new descent row. Otherwise that component loses its only
+// ceiling anchor when the new row replaces row 0, and dropFloaters() drops
+// the whole vertical chain underneath it — visible mid-stack anywhere a
+// pattern row, ragged shot remnants, or pop residue left an isolated island
+// of bubbles in the previous top. Patterns alone don't guarantee overlap
+// here: by the time a descent runs, the actual top of the stack is whatever
+// shots+pops have shaped, not the row the pattern last emitted.
+const bridgePrevTop = (
   state: GameState,
   newRow: Array<Bubble | null>,
   prevTop: Array<Bubble | null>,
@@ -84,8 +82,8 @@ const nextPatternRow = (state: GameState, rng: () => number): Array<Bubble | nul
   const pattern = transitioning ? pickPattern(rng, state.pattern?.kind) : state.pattern!;
   state.pattern = pattern;
   const row = patternRow(state, pattern, rng);
-  if (transitioning && state.grid.length > 0) {
-    bridgeAcrossTransition(state, row, state.grid[0]!, rng);
+  if (state.grid.length > 0) {
+    bridgePrevTop(state, row, state.grid[0]!, rng);
   }
   pattern.step++;
   return row;
