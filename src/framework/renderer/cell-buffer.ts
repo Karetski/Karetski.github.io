@@ -49,6 +49,11 @@ export const createCellBuffer = (
     },
 
     beginFrame(theme) {
+      if (frameTheme && frameTheme !== theme && frameTheme.bg !== theme.bg) {
+        ctx.fillStyle = theme.bg;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        rendered = new Map();
+      }
       frameTheme = theme;
       writes = new Map();
     },
