@@ -2,6 +2,8 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+@.claude/agentkit-conduct.md
+
 ## Stack
 
 Static site for `karetski.com`, deployed to GitHub Pages from `main` via `.github/workflows/deploy.yml`. No framework — TypeScript bundled by Bun, served as plain HTML + ESM. The repo root *is* the deploy artifact: HTML files reference `dist/*.js` directly, so `dist/` must exist for the site to work locally even though it is gitignored.
@@ -73,6 +75,13 @@ When adding a feature, prefer extending the existing per-concern logic/component
 
 - Indexed access returns `T | undefined`. Existing code asserts with `!` after bounds checks or relies on the `?.` chain — match that style rather than disabling the flag.
 - `verbatimModuleSyntax` means type-only imports must use `import type { ... }`. Mixing values and types in a plain `import` will fail typecheck.
+
+## Skills
+
+Vendored from agentkit (`.claude/agentkit.lock`; edit upstream and run `tools/sync-agentkit.sh`, never edit the copies): `architecture-canon`, `behavioral-testing`, `commit-discipline`, `debugging-methodology`, `function-shape`, `hot-path-budget-audit`, `principle-review`, `simplify-ruthless`. The coding conduct imported above comes from the same place.
+
+- `hot-path-budget-audit` — run when touching anything called per frame: the host loop, a scene's `update`, or a component's `paint`.
+- `principle-review` — treats this file (layout rules, scene contracts, TS conventions) as the project's principles.
 
 ## Deploy
 
