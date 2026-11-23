@@ -13,43 +13,59 @@ bun install              # install deps (devDependencies only)
 bun run build            # one-shot bundle to dist/ (minified, browser target)
 bun run dev              # rebuild on change (no dev server — serve the repo root yourself)
 bun run typecheck        # tsc --noEmit, strict mode
+bun run test             # bun test — unit tests (*.test.ts under src/ and tests/)
 bun run verify           # Playwright smoke test — REQUIRES a local server on :8123
 ```
 
+Run a single test file with `bun test src/apps/bubble-game/physics.test.ts`. Test helpers live in `tests/helpers/` (`make-state.ts` builds a `GameState` with a fake theme/deps, `seeded-rng.ts` for deterministic randomness).
+
 `bun run verify` opens both `index.html` and `play/bubble.html`, exercises the theme toggle and a couple of bubble shots, and fails on any console/page error or failed request. Start a server first, e.g. `bunx serve -l 8123 .` or `python3 -m http.server 8123`. Output (JSON report + screenshots) goes to `/tmp/claude/verify`.
 
-There is no test runner and no linter beyond `tsc`.
+There is no linter beyond `tsc`.
+
+## Source layout
+
+```
+src/
+  framework/   reusable engine: scene host, layout, renderer (cell buffer + WebGL CRT), theme, ui helpers
+  apps/        scenes built on the framework: matrix-background, site-chrome, bubble-game
+  pages/       one entry per HTML page; wires a theme + scene host and mounts scenes
+  shared/      small pure utilities (math)
+```
+
+`framework/` must not import from `apps/` or `pages/`. Apps may import from `framework/` and, sparingly, from each other (e.g. bubble-game borrows `CHARSETS` from matrix-background).
 
 ## Entry points and HTML wiring
 
-Two HTML pages, two bundle entries:
+| Page | HTML | Entry (`dist/` output) | Scenes mounted |
+|------|------|------------------------|----------------|
+| Home | `index.html` | `src/pages/home.ts` (`home.js`) | matrix-background, site-chrome |
+| Bubble shooter | `play/bubble.html` | `src/pages/play-bubble.ts` (`play-bubble.js`) | matrix-background, site-chrome, bubble-game |
 
-| Page | HTML | Entry | Bundles |
-|------|------|-------|---------|
-| Home | `index.html` | `src/index.ts` | matrix only |
-| Bubble shooter | `play/bubble.html` | `src/play-bubble.ts` | matrix + bubble game |
+Play-vs-home is decided in the page entry, not the DOM: `play-bubble.ts` calms the theme config (noise/flip rates), creates the matrix with `calmField: true`, and passes `isPlayMode: true` to site-chrome. Add new pages by adding an entry in `src/pages/`, an HTML file, and the entry path to both `build` and `dev` scripts in `package.json`.
 
-`play/bubble.html` sets `<body data-page="play">`. `src/matrix/state.ts` reads this attribute at module load and switches the matrix into "play mode" (calmer flip/noise rates) so the game reads as the foreground. Anything that needs the play-vs-home distinction should branch on `state.isPlayMode` rather than checking the DOM again.
+## Architecture: scene host
 
-## Architecture: matrix + game host
+`createSceneHost({ screen, theme })` (`src/framework/scene/host.ts`) owns the canvas, the cell buffer, the WebGL CRT post-process, layout, input, and the single RAF loop. Each frame it calls every scene's `update(dt, now)`, then `paint(ctx)` on every component (in `zIndex` order), then flushes the cell buffer through the CRT.
 
-The "matrix" is the falling-character CRT background rendered via a WebGL post-process (`src/matrix/crt.ts`, `shaders.ts`). It owns the canvas, the cell grid, the panel layout, theming, and pointer input — and it runs on every page.
+Contracts are in `src/framework/scene/types.ts`:
 
-Games are layered *on top* by writing into the same grid as locked cells. The contract lives in `src/shared/types.ts` as the `MatrixGame` interface, which `src/matrix/hook.ts` implements. A game receives this object from `startMatrix()` and uses it to:
+- **`Scene`** — `name`, `zIndex`, `components` (array or function of `RenderContext`), plus optional `update`, `onMount`, `onUnmount`, `onLayout`, `onTheme` hooks. Current z-order: matrix-background `0`, bubble-game `50`, site-chrome `100`.
+- **`Component`** — just `paint(ctx: RenderContext)`. `RenderContext` gives `cells` (`put`/`clear`), `theme` snapshot, `layout`, `dt`, `now`, `input`. Nothing draws to the canvas directly.
+- **`SceneHostServices`** — `flash.trigger(ms)` for full-screen feedback, `setRegion(name, region)` to publish a named grid region, `setPanelMask(rect)` for the CRT panel cutout, `requestLayoutRefresh()`.
 
-- Read grid geometry (`cols`, `rows`, `cellW`, `cellH`) and the bottom panel's bounds.
-- Reserve a region with `setPlayfieldBounds(...)` — cells inside the playfield get a different palette so the game's writes stand out.
-- Write/clear cells with `setCell(col, row, char, color)` / `clearCell(col, row)`. Locked cells survive matrix flips.
-- Subscribe to `'regrid'` to recompute layout when the grid reflows (font load, resize, panel label change). The bubble game treats a column-count change as a hard reset because existing rows would otherwise have the wrong length.
-- Trigger `flashBackground(durationMs)` for full-screen feedback.
+Named regions are how scenes coordinate: site-chrome publishes `'panel'`; bubble-game reads `'panel'` in `onLayout` and publishes `'playfield'`; matrix-background reads `'playfield'` to switch palette/behaviour inside it. Changing a region re-runs `onLayout` on all scenes.
 
-Game registry is `src/games/index.ts` (currently just bubble). Each game exports a `Game` (`{ slug, title, start(matrix) }`).
+Errors thrown by scene hooks or components are caught and logged by the host, so one broken component doesn't stop the loop — but `verify` will still fail on the console error.
 
-## Bubble game shape (`src/games/bubble/`)
+## Bubble game shape (`src/apps/bubble-game/`)
 
-The game runs its own RAF loop independent of the matrix loop. Each tick: `updateAim → tick(physics) → checkLose → render`. State is a single mutable module (`state.ts`) — there is no store/dispatcher abstraction. Rendering is split per concern (`render-aim`, `render-bubbles`, `render-bursts`, `render-hud`, `render-pops`) and each writes through the `MatrixGame` cell API; nothing draws to the canvas directly.
+- `scene.ts` adapts the game to the host. `update` runs `updateAim → tick (physics) → checkLose`.
+- State is a single mutable module (`state.ts`) — no store/dispatcher. Host-provided capabilities the logic needs are injected as `state.M: GameDeps` (`deps.ts`); components don't use `GameDeps`, they read from `RenderContext`.
+- Logic is split by concern: `physics`, `matching`, `bubbles`, `bursts`, `patterns`, `layout`, `input`. Rendering is split per concern under `components/` (`aim-line`, `bubbles`, `burst`, `hud`, `pop`).
+- A change in slot-column count on layout is treated as a hard reset, because existing rows would otherwise have the wrong length.
 
-When adding a feature, prefer extending the existing per-concern render module rather than introducing a new abstraction layer.
+When adding a feature, prefer extending the existing per-concern logic/component module rather than introducing a new abstraction layer. Logic modules are unit-tested; add tests alongside (`*.test.ts`) using `tests/helpers/make-state.ts`.
 
 ## TypeScript conventions enforced by tsconfig
 
@@ -60,4 +76,4 @@ When adding a feature, prefer extending the existing per-concern render module r
 
 ## Deploy
 
-Push to `main` → GitHub Actions runs `bun install --frozen-lockfile && bun run build`, then uploads the entire repo (including the freshly built `dist/`) as the Pages artifact. There is no separate publish branch. `CNAME` pins the custom domain.
+Push to `main` → GitHub Actions runs `bun install --frozen-lockfile`, `bun run typecheck`, `bun run test`, `bun run build`, then uploads the entire repo (including the freshly built `dist/`) as the Pages artifact. There is no separate publish branch. `CNAME` pins the custom domain.
