@@ -78,7 +78,7 @@ When adding a feature, prefer extending the existing per-concern logic/component
 
 ## Skills
 
-Vendored from agentkit (`.claude/agentkit.lock`; edit upstream and run `tools/sync-agentkit.sh`, never edit the copies): `architecture-canon`, `behavioral-testing`, `commit-discipline`, `debugging-methodology`, `function-shape`, `hot-path-budget-audit`, `principle-review`, `simplify-ruthless`. The coding conduct imported above comes from the same place.
+Adapted from agentkit and maintained here: `architecture-canon`, `behavioral-testing`, `commit-discipline`, `debugging-methodology`, `function-shape`, `hot-path-budget-audit`, `principle-review`, `simplify-ruthless`. The coding conduct imported above comes from the same place.
 
 - `hot-path-budget-audit` — run when touching anything called per frame: the host loop, a scene's `update`, or a component's `paint`.
 - `principle-review` — treats this file (layout rules, scene contracts, TS conventions) as the project's principles.
