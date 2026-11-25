@@ -74,7 +74,9 @@ Read `docs/shaders.md` before touching `src/stage/` or `src/effects/`. In short:
 
 ## Skills
 
-- `architecture-canon`, `behavioral-testing`, `commit-discipline`, `debugging-methodology`, `function-shape`, `hot-path-budget-audit`, `principle-review` (this file is the principles), `simplify-ruthless`.
+- `shader-effect`: write or change an effect.
+- `seasonal-theme`: add a dated theme.
+- General: `architecture-canon`, `behavioral-testing`, `commit-discipline`, `debugging-methodology`, `function-shape`, `hot-path-budget-audit`, `principle-review` (this file is the principles), `simplify-ruthless`.
 
 ## Deploy
 
