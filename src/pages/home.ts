@@ -1,7 +1,7 @@
-import { createSceneHost } from '../framework/scene/host';
-import { createThemeProvider } from '../framework/theme/provider';
-import { createMatrixBackgroundScene } from '../apps/matrix-background/scene';
-import { createSiteChromeScene } from '../apps/site-chrome/scene';
+import { createSceneHost } from '../bubble/framework/scene/host';
+import { createThemeProvider } from '../bubble/framework/theme/provider';
+import { createMatrixBackgroundScene } from '../bubble/apps/matrix-background/scene';
+import { createSiteChromeScene } from '../bubble/apps/site-chrome/scene';
 
 const screen = document.getElementById('screen') as HTMLCanvasElement | null;
 if (screen) {

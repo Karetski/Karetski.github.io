@@ -19,7 +19,7 @@ bun run test             # bun test — unit tests (*.test.ts under src/ and tes
 bun run verify           # Playwright smoke test — REQUIRES a local server on :8123
 ```
 
-Run a single test file with `bun test src/apps/bubble-game/physics.test.ts`. Test helpers live in `tests/helpers/` (`make-state.ts` builds a `GameState` with a fake theme/deps, `seeded-rng.ts` for deterministic randomness).
+Run a single test file with `bun test src/bubble/apps/bubble-game/physics.test.ts`. Test helpers live in `tests/helpers/` (`make-state.ts` builds a `GameState` with a fake theme/deps, `seeded-rng.ts` for deterministic randomness).
 
 `bun run verify` opens both `index.html` and `play/bubble.html`, exercises the theme toggle and a couple of bubble shots, and fails on any console/page error or failed request. Start a server first, e.g. `bunx serve -l 8123 .` or `python3 -m http.server 8123`. Output (JSON report + screenshots) goes to `/tmp/claude/verify`.
 
@@ -29,10 +29,11 @@ There is no linter beyond `tsc`.
 
 ```
 src/
-  framework/   reusable engine: scene host, layout, renderer (cell buffer + WebGL CRT), theme, ui helpers
-  apps/        scenes built on the framework: matrix-background, site-chrome, bubble-game
+  bubble/
+    framework/ reusable engine: scene host, layout, renderer (cell buffer + WebGL CRT), theme, ui helpers
+    apps/      scenes built on the framework: matrix-background, site-chrome, bubble-game
+    shared/    small pure utilities (math)
   pages/       one entry per HTML page; wires a theme + scene host and mounts scenes
-  shared/      small pure utilities (math)
 ```
 
 `framework/` must not import from `apps/` or `pages/`. Apps may import from `framework/` and, sparingly, from each other (e.g. bubble-game borrows `CHARSETS` from matrix-background).
@@ -48,9 +49,9 @@ Play-vs-home is decided in the page entry, not the DOM: `play-bubble.ts` calms t
 
 ## Architecture: scene host
 
-`createSceneHost({ screen, theme })` (`src/framework/scene/host.ts`) owns the canvas, the cell buffer, the WebGL CRT post-process, layout, input, and the single RAF loop. Each frame it calls every scene's `update(dt, now)`, then `paint(ctx)` on every component (in `zIndex` order), then flushes the cell buffer through the CRT.
+`createSceneHost({ screen, theme })` (`src/bubble/framework/scene/host.ts`) owns the canvas, the cell buffer, the WebGL CRT post-process, layout, input, and the single RAF loop. Each frame it calls every scene's `update(dt, now)`, then `paint(ctx)` on every component (in `zIndex` order), then flushes the cell buffer through the CRT.
 
-Contracts are in `src/framework/scene/types.ts`:
+Contracts are in `src/bubble/framework/scene/types.ts`:
 
 - **`Scene`** — `name`, `zIndex`, `components` (array or function of `RenderContext`), plus optional `update`, `onMount`, `onUnmount`, `onLayout`, `onTheme` hooks. Current z-order: matrix-background `0`, bubble-game `50`, site-chrome `100`.
 - **`Component`** — just `paint(ctx: RenderContext)`. `RenderContext` gives `cells` (`put`/`clear`), `theme` snapshot, `layout`, `dt`, `now`, `input`. Nothing draws to the canvas directly.
@@ -60,7 +61,7 @@ Named regions are how scenes coordinate: site-chrome publishes `'panel'`; bubble
 
 Errors thrown by scene hooks or components are caught and logged by the host, so one broken component doesn't stop the loop — but `verify` will still fail on the console error.
 
-## Bubble game shape (`src/apps/bubble-game/`)
+## Bubble game shape (`src/bubble/apps/bubble-game/`)
 
 - `scene.ts` adapts the game to the host. `update` runs `updateAim → tick (physics) → checkLose`.
 - State is a single mutable module (`state.ts`) — no store/dispatcher. Host-provided capabilities the logic needs are injected as `state.M: GameDeps` (`deps.ts`); components don't use `GameDeps`, they read from `RenderContext`.

@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import { descend, ensureRow, makeBubble, randomRow, reset, refillIfEmpty } from './bubbles';
-import { makeState } from '../../../tests/helpers/make-state';
-import { mulberry32 } from '../../../tests/helpers/seeded-rng';
+import { makeState } from '../../../../tests/helpers/make-state';
+import { mulberry32 } from '../../../../tests/helpers/seeded-rng';
 
 describe('makeBubble', () => {
   test('with a seeded rng produces a stable colorIdx and char', () => {

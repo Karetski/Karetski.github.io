@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import { collectMatch, collectFloaters, popCell, popGroup, isLose, checkLose } from './matching';
 import type { Bubble, GameGrid } from './state';
-import { makeState } from '../../../tests/helpers/make-state';
+import { makeState } from '../../../../tests/helpers/make-state';
 
 const b = (colorIdx: number, char: string = String.fromCharCode(65 + colorIdx)): Bubble => ({
   colorIdx,

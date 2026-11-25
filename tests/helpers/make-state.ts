@@ -1,7 +1,7 @@
-import type { GameDeps } from '../../src/apps/bubble-game/deps';
-import type { GameState } from '../../src/apps/bubble-game/state';
-import type { ThemeSnapshot } from '../../src/framework/theme/types';
-import { defaultConfig } from '../../src/framework/theme/config';
+import type { GameDeps } from '../../src/bubble/apps/bubble-game/deps';
+import type { GameState } from '../../src/bubble/apps/bubble-game/state';
+import type { ThemeSnapshot } from '../../src/bubble/framework/theme/types';
+import { defaultConfig } from '../../src/bubble/framework/theme/config';
 
 const NOOP = (): void => {};
 
