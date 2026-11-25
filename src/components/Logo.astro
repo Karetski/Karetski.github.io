@@ -1,0 +1,27 @@
+---
+// The AK mark, inlined from the canonical src/assets/ak.svg. It is the no-WebGL
+// fallback and the stage's layout anchor (data-stage-logo). Its optical centre
+// (a port of javier.xyz/visual-center) is measured here at build time and
+// exposed as --optical-x/--optical-y: the shift that puts the mark's visual
+// weight at the box centre. CSS applies it where a logo should look centred.
+import source from '../assets/ak.svg?raw';
+import { parsePolygonPath, parseSvgSource } from '../stage/svg-path';
+import { visualCenter } from '../stage/visual-center';
+
+interface Props {
+  /** Accessible name; omit when the surrounding link already names it. */
+  label?: string;
+}
+
+const { label } = Astro.props;
+const { viewBox, box, paths } = parseSvgSource(source);
+const centre = visualCenter(paths.flatMap(parsePolygonPath), box);
+const shift = (c: number) => `${((0.5 - c) * 100).toFixed(2)}%`;
+---
+<svg
+  data-stage-logo
+  viewBox={viewBox}
+  role={label ? 'img' : undefined}
+  aria-label={label}
+  style={`--optical-x:${shift(centre.x)};--optical-y:${shift(centre.y)}`}
+>{paths.map((d) => <path d={d} />)}</svg>

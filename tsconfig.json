@@ -14,7 +14,7 @@
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "verbatimModuleSyntax": true,
-    "types": ["bun"]
+    "types": ["astro/client", "node"]
   },
-  "include": ["src/**/*"]
+  "include": ["src/**/*", "tests/**/*", "scripts/**/*"]
 }

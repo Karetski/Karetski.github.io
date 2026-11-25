@@ -1,0 +1,29 @@
+---
+// Shell for every page on the shader site: head, the stage canvas, and the
+// stage entry (src/site.ts). A page opts into the logo slot by containing <Logo />.
+import '../styles/site.css';
+import font from '../assets/fonts/outfit-latin.woff2?url';
+
+interface Props {
+  /** Page name; the tab reads "<title> — Alexey Karetski". Omit on home. */
+  title?: string;
+}
+
+const { title } = Astro.props;
+---
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{title ? `${title} — Alexey Karetski` : 'Alexey Karetski'}</title>
+  <link rel="icon" href="/favicon.png" sizes="32x32">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="preload" href={font} as="font" type="font/woff2" crossorigin>
+</head>
+<body>
+  <canvas id="stage"></canvas>
+  <slot />
+  <script>import '../site';</script>
+</body>
+</html>

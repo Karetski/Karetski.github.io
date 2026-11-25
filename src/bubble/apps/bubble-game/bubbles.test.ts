@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'bun:test';
+import { describe, expect, test } from 'vitest';
 import { descend, ensureRow, makeBubble, randomRow, reset, refillIfEmpty } from './bubbles';
 import { makeState } from '../../../../tests/helpers/make-state';
 import { mulberry32 } from '../../../../tests/helpers/seeded-rng';

@@ -1,21 +1,25 @@
-<!DOCTYPE html>
+---
+// The bubble shooter runs on its own engine and styles (src/bubble/), not the
+// shader site's layout.
+import '../../bubble/style.css';
+---
+<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Alexey Karetski</title>
-  <link rel="icon" type="image/png" href="favicon.png">
+  <title>Bubble shooter — Alexey Karetski</title>
+  <link rel="icon" type="image/png" href="/favicon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sometype+Mono:wght@400;500&display=swap">
-  <link rel="stylesheet" href="css/style.css">
 </head>
-<body>
+<body data-page="play">
   <canvas id="screen"></canvas>
   <div id="title"></div>
   <div id="links"></div>
   <div id="nav"></div>
   <div id="theme-toggle"></div>
-  <script type="module" src="dist/home.js"></script>
+  <script>import '../../bubble/main';</script>
 </body>
 </html>

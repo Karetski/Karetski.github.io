@@ -1,0 +1,63 @@
+@font-face {
+  font-family: Outfit;
+  src: url(../assets/fonts/outfit-latin.woff2) format("woff2");
+  font-weight: 100 900;
+  font-display: swap;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html {
+  background: #f0f0f0;
+  color: #1a1a1a;
+  color-scheme: light;
+  font: 300 1.125rem/1.6 Outfit, system-ui, sans-serif;
+}
+
+a { color: #707070; text-decoration: none; }
+a:hover, a:focus-visible { color: #000; }
+ul { list-style: none; }
+
+/* Icons fill their viewBox edge to edge; let anti-aliasing spill past it. */
+svg { display: block; overflow: visible; fill: currentColor; }
+
+#stage { position: fixed; inset: 0; width: 100%; height: 100%; z-index: -1; }
+
+/* The inline SVG logo is both the no-WebGL fallback and the stage's layout
+   anchor; once the stage draws (html.gl) the shader replaces it. */
+[data-stage-logo] { width: 100%; }
+.gl [data-stage-logo] { visibility: hidden; }
+
+main { max-width: 40rem; margin: 0 auto; padding: 7rem 1.5rem; }
+h1 { font-size: inherit; font-weight: 400; margin-bottom: 1.5rem; }
+
+.mark { position: absolute; top: 1.5rem; left: 1.5rem; width: 2.5rem; color: inherit; }
+
+/* Home is a golden-ratio modular scale keyed to the logo height --l, matching
+   the original sketch: every size and gap is --l / φⁿ (φ⁻¹ .618, φ⁻² .382,
+   φ⁻⁴ .146). --l comes from the viewport, so the balance holds at any size. */
+.home {
+  --l: min(29svh, 52vw);
+  max-width: none;
+  min-height: 100svh;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(var(--l) * 0.146);  /* link text: φ⁻⁴ */
+  line-height: 1.618;                  /* link pitch: φ⁻³ */
+}
+/* Gaps are centre to centre, as in the sketch: logo → first link line φ⁻¹. */
+.home h1 { margin-bottom: calc(var(--l) * 0.618 - 0.5lh); }
+/* Optically centred: site.ts measures the shift from the logo's outline. */
+.home h1 svg { width: auto; height: var(--l); translate: var(--optical-x, 0) var(--optical-y, 0); }
+.home nav { display: flex; flex-direction: column; align-items: center; }
+/* A separate group (1.6× the link pitch, per proximity): last link → icons φ⁻²,
+   icons φ⁻² apart, each as tall as the text's capitals. */
+.home .socials {
+  flex-direction: row;
+  margin-top: calc(var(--l) * 0.382 - 0.5lh - 0.5cap);
+  gap: calc(var(--l) * 0.382 - 1cap);
+}
+.socials svg { width: 1cap; height: 1cap; }

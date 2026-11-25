@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'bun:test';
+import { describe, expect, test } from 'vitest';
 import { sectionWidths } from './layout';
 
 // sectionWidths splits a panel of `totalW` columns into `count` sections so

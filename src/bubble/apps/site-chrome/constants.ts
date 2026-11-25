@@ -5,10 +5,10 @@ export const TOGGLE_LIGHT_LABEL = 'switch to light';
 export const NAV_PLAY_LABEL = 'bubble game';
 export const NAV_BACK_LABEL = 'back';
 
-// Root-absolute so the link works from any depth (the bubble page lives in
-// /play/, so a relative 'index.html' would resolve to /play/index.html).
-export const NAV_HOME_HREF = '/index.html';
-export const NAV_PLAY_HREF = '/play/bubble.html';
+// Root-absolute so the links work from any page depth. In play mode "back"
+// returns to the projects list, the bubble page's parent.
+export const NAV_HOME_HREF = '/projects';
+export const NAV_PLAY_HREF = '/projects/bubble';
 
 export const FRAME_PAD = 4;
 export const FRAME_GAP = 1;

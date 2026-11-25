@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'bun:test';
+import { describe, expect, test } from 'vitest';
 import { fade, smoothstep, smoothstep01, desaturate, dimToBg, blendToBg, noise3 } from './math';
 
 describe('fade', () => {

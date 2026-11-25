@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'bun:test';
+import { describe, expect, test } from 'vitest';
 import { collectMatch, collectFloaters, popCell, popGroup, isLose, checkLose } from './matching';
 import type { Bubble, GameGrid } from './state';
 import { makeState } from '../../../../tests/helpers/make-state';

@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'bun:test';
+import { describe, expect, test } from 'vitest';
 import { aimAngle, reflectX, findSnapSlot } from './physics';
 import type { Bubble, GameGrid } from './state';
 
